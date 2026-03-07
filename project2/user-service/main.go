@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/IBM/sarama"
@@ -207,6 +208,14 @@ func (s *Server) handleCreateUser(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		log.Printf("Failed to insert user: %v", err)
+		
+		// Check for duplicate email constraint violation
+		if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+			httpRequestsTotal.WithLabelValues("POST", "/users", "409").Inc()
+			http.Error(w, "Email already exists", http.StatusConflict)
+			return
+		}
+		
 		httpRequestsTotal.WithLabelValues("POST", "/users", "500").Inc()
 		http.Error(w, "Failed to create user", http.StatusInternalServerError)
 		return

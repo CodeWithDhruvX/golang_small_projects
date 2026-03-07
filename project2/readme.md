@@ -564,3 +564,24 @@ Start-Sleep -Seconds 30
 Invoke-RestMethod -Uri "http://localhost:8081/health"
 Invoke-RestMethod -Uri "http://localhost:8082/health"
 Invoke-RestMethod -Uri "http://localhost:8083/health"
+
+
+
+🎯 UI Tools Added
+Tool	URL	Port	Purpose
+pgAdmin	http://localhost:5050	5050	PostgreSQL Management
+MongoDB Express	http://localhost:8084	8084	MongoDB Management
+Kafka UI	http://localhost:8085	8085	Kafka Cluster Management
+🚀 Quick Access
+PostgreSQL UI (pgAdmin)
+URL: http://localhost:5050
+Login: admin@admin.com / admin123
+Databases: userdb, orderdb
+MongoDB UI (Mongo Express)
+URL: http://localhost:8084
+No login required
+Database: paymentdb
+Kafka UI
+URL: http://localhost:8085
+No login required
+Topics: user.created, order.created, payment.completed

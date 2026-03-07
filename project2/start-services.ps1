@@ -61,7 +61,7 @@ if ($allHealthy) {
     Write-Host "  Order Service:   http://localhost:8082"
     Write-Host "  Payment Service: http://localhost:8083"
     Write-Host "`nQuick test:"
-    Write-Host '  Invoke-RestMethod -Uri "http://localhost:8081/users" -Method POST -ContentType "application/json" -Body '\''{"name":"Test","email":"test@test.com"}'\''
+    Write-Host '  Invoke-RestMethod -Uri "http://localhost:8081/users" -Method POST -ContentType "application/json" -Body "{""name"":""Test"",""email"":""test@test.com""}"'
 } else {
     Write-Host "`nSome services are not ready yet. Check logs with: docker-compose logs -f" -ForegroundColor Yellow
 }
