@@ -1,0 +1,27 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kafka-init
+  namespace: ecommerce
+spec:
+  template:
+    spec:
+      containers:
+      - name: kafka-init
+        image: confluentinc/cp-kafka:7.4.0
+        command:
+        - /bin/sh
+        - -c
+        - |
+          echo "Waiting for Kafka to be ready..."
+          sleep 30
+          kafka-topics --bootstrap-server kafka:9092 --list || true
+          
+          echo "Creating topics..."
+          kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic user.created --replication-factor 1 --partitions 3 || true
+          kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic order.created --replication-factor 1 --partitions 3 || true
+          kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic payment.completed --replication-factor 1 --partitions 3 || true
+          
+          echo "Topics created:"
+          kafka-topics --bootstrap-server kafka:9092 --list
+      restartPolicy: OnFailure

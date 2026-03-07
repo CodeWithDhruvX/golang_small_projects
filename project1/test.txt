@@ -1,0 +1,5 @@
+go: downloading go1.25.0 (windows/amd64)
+?   	github.com/dhruv/kafka-microservices/cmd/notification-service	[no test files]
+?   	github.com/dhruv/kafka-microservices/cmd/order-service	[no test files]
+?   	github.com/dhruv/kafka-microservices/internal/kafka	[no test files]
+ok  	github.com/dhruv/kafka-microservices/internal/models	0.531s

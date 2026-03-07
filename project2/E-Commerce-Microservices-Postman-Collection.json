@@ -1,0 +1,839 @@
+{
+  "info": {
+    "_postman_id": "ecommerce-microservices-2024",
+    "name": "Event-Driven E-Commerce Microservices",
+    "description": "Complete API test collection for User, Order, and Payment Services with event-driven flow",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. User Service",
+      "description": "User registration and management APIs",
+      "item": [
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@example.com\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8081/users",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8081",
+              "path": ["users"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Test 1: Status code is 201 Created",
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "// Test 2: Response has Content-Type header",
+                  "pm.test('Content-Type is application/json', function () {",
+                  "    pm.response.to.have.header('Content-Type');",
+                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+                  "});",
+                  "",
+                  "// Test 3: Response has required fields",
+                  "pm.test('Response has required fields', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData).to.have.property('name');",
+                  "    pm.expect(jsonData).to.have.property('email');",
+                  "    pm.expect(jsonData).to.have.property('created_at');",
+                  "});",
+                  "",
+                  "// Test 4: ID is a valid UUID",
+                  "pm.test('ID is a valid UUID', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    var uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;",
+                  "    pm.expect(jsonData.id).to.match(uuidPattern);",
+                  "});",
+                  "",
+                  "// Test 5: Name and email match request",
+                  "pm.test('Name and email match request', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.name).to.eql('John Doe');",
+                  "    pm.expect(jsonData.email).to.eql('john.doe@example.com');",
+                  "});",
+                  "",
+                  "// Save user ID for next requests",
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set('userId', jsonData.id);",
+                  "console.log('Created user with ID:', jsonData.id);"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "console.log('Creating new user...');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8081/users/{{userId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8081",
+              "path": ["users", "{{userId}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Test 1: Status code is 200",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "// Test 2: Response contains user data",
+                  "pm.test('Response contains user data', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData).to.have.property('name');",
+                  "    pm.expect(jsonData).to.have.property('email');",
+                  "    pm.expect(jsonData.id).to.eql(pm.collectionVariables.get('userId'));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8081/health",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8081",
+              "path": ["health"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Test 1: Status code is 200",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "// Test 2: Service is healthy",
+                  "pm.test('Service is healthy', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.status).to.eql('healthy');",
+                  "    pm.expect(jsonData.service).to.eql('user-service');",
+                  "});",
+                  "",
+                  "// Test 3: Database is connected",
+                  "pm.test('Database is connected', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.database).to.eql('connected');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Metrics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8081/metrics",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8081",
+              "path": ["metrics"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Test 1: Status code is 200",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "// Test 2: Response contains Prometheus metrics",
+                  "pm.test('Response contains Prometheus metrics', function () {",
+                  "    var responseText = pm.response.text();",
+                  "    pm.expect(responseText).to.include('user_service_http_requests_total');",
+                  "    pm.expect(responseText).to.include('user_service_db_queries_total');",
+                  "    pm.expect(responseText).to.include('user_service_kafka_messages_produced_total');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Internal Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8081/internal/stats",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8081",
+              "path": ["internal", "stats"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Test 1: Status code is 200",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "// Test 2: Response contains stats",
+                  "pm.test('Response contains internal stats', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('service');",
+                  "    pm.expect(jsonData).to.have.property('timestamp');",
+                  "    pm.expect(jsonData).to.have.property('totalUsers');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Order Service",
+      "description": "Order creation and Kafka consumer APIs",
+      "item": [
+        {
+          "name": "Create Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"{{userId}}\",\n  \"product_name\": \"Gaming Laptop\",\n  \"price\": 1299\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8082/orders",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8082",
+              "path": ["orders"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Test 1: Status code is 201 Created",
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "// Test 2: Response has required fields",
+                  "pm.test('Response has required fields', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData).to.have.property('user_id');",
+                  "    pm.expect(jsonData).to.have.property('product_name');",
+                  "    pm.expect(jsonData).to.have.property('price');",
+                  "    pm.expect(jsonData).to.have.property('status');",
+                  "    pm.expect(jsonData).to.have.property('created_at');",
+                  "});",
+                  "",
+                  "// Test 3: ID is valid UUID",
+                  "pm.test('Order ID is valid UUID', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    var uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;",
+                  "    pm.expect(jsonData.id).to.match(uuidPattern);",
+                  "});",
+                  "",
+                  "// Test 4: User ID matches",
+                  "pm.test('User ID matches request', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.user_id).to.eql(pm.collectionVariables.get('userId'));",
+                  "});",
+                  "",
+                  "// Test 5: Order status is pending",
+                  "pm.test('Order status is pending', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.status).to.eql('pending');",
+                  "});",
+                  "",
+                  "// Test 6: Price is correct",
+                  "pm.test('Price is correct', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.price).to.eql(1299);",
+                  "});",
+                  "",
+                  "// Save order ID for next requests",
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set('orderId', jsonData.id);",
+                  "console.log('Created order with ID:', jsonData.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Order by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8082/orders/{{orderId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8082",
+              "path": ["orders", "{{orderId}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Test 1: Status code is 200",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "// Test 2: Order data is correct",
+                  "pm.test('Order data is correct', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.id).to.eql(pm.collectionVariables.get('orderId'));",
+                  "    pm.expect(jsonData.user_id).to.eql(pm.collectionVariables.get('userId'));",
+                  "    pm.expect(jsonData.product_name).to.eql('Gaming Laptop');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8082/health",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8082",
+              "path": ["health"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Service is healthy', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.status).to.eql('healthy');",
+                  "    pm.expect(jsonData.service).to.eql('order-service');",
+                  "    pm.expect(jsonData).to.have.property('cached_users');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Metrics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8082/metrics",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8082",
+              "path": ["metrics"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Contains Kafka consumer metrics', function () {",
+                  "    var responseText = pm.response.text();",
+                  "    pm.expect(responseText).to.include('order_service_kafka_messages_consumed_total');",
+                  "    pm.expect(responseText).to.include('order_service_kafka_messages_produced_total');",
+                  "    pm.expect(responseText).to.include('order_service_users_cached');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get User Cache",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8082/internal/cache",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8082",
+              "path": ["internal", "cache"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Cache contains user from Kafka', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    var userId = pm.collectionVariables.get('userId');",
+                  "    pm.expect(jsonData).to.have.property(userId);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Internal Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8082/internal/stats",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8082",
+              "path": ["internal", "stats"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Contains order stats', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('totalOrders');",
+                  "    pm.expect(jsonData).to.have.property('cachedUsers');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Payment Service",
+      "description": "Payment processing and MongoDB APIs",
+      "item": [
+        {
+          "name": "Wait for Payment Processing",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8082/internal/stats",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8082",
+              "path": ["internal", "stats"]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Wait 3 seconds for payment to be processed",
+                  "console.log('Waiting 3 seconds for payment processing...');",
+                  "setTimeout(function() {}, 3000);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get All Payments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8083/payments",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8083",
+              "path": ["payments"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Test 1: Status code is 200",
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "// Test 2: Response is an array",
+                  "pm.test('Response is an array', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});",
+                  "",
+                  "// Test 3: At least one payment exists",
+                  "pm.test('At least one payment exists', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.length).to.be.at.least(1);",
+                  "});",
+                  "",
+                  "// Test 4: Payment has required fields",
+                  "pm.test('Payment has required fields', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    var payment = jsonData[jsonData.length - 1]; // Get latest",
+                  "    pm.expect(payment).to.have.property('_id');",
+                  "    pm.expect(payment).to.have.property('order_id');",
+                  "    pm.expect(payment).to.have.property('user_id');",
+                  "    pm.expect(payment).to.have.property('amount');",
+                  "    pm.expect(payment).to.have.property('payment_status');",
+                  "});",
+                  "",
+                  "// Test 5: Payment links to our order",
+                  "pm.test('Payment links to our order', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    var orderId = pm.collectionVariables.get('orderId');",
+                  "    var matchingPayment = jsonData.find(function(p) {",
+                  "        return p.order_id === orderId;",
+                  "    });",
+                  "    pm.expect(matchingPayment).to.not.be.undefined;",
+                  "    pm.collectionVariables.set('paymentId', matchingPayment._id);",
+                  "    console.log('Found payment:', matchingPayment._id);",
+                  "});",
+                  "",
+                  "// Test 6: Payment amount matches order",
+                  "pm.test('Payment amount matches order price', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    var orderId = pm.collectionVariables.get('orderId');",
+                  "    var payment = jsonData.find(function(p) {",
+                  "        return p.order_id === orderId;",
+                  "    });",
+                  "    pm.expect(payment.amount).to.eql(1299);",
+                  "});",
+                  "",
+                  "// Test 7: Payment status is valid",
+                  "pm.test('Payment status is valid (success or failed)', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    var orderId = pm.collectionVariables.get('orderId');",
+                  "    var payment = jsonData.find(function(p) {",
+                  "        return p.order_id === orderId;",
+                  "    });",
+                  "    pm.expect(['success', 'failed']).to.include(payment.payment_status);",
+                  "    console.log('Payment status:', payment.payment_status);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Payment by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8083/payments/{{paymentId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8083",
+              "path": ["payments", "{{paymentId}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Payment ID matches', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData._id).to.eql(pm.collectionVariables.get('paymentId'));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8083/health",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8083",
+              "path": ["health"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Service is healthy', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.status).to.eql('healthy');",
+                  "    pm.expect(jsonData.service).to.eql('payment-service');",
+                  "    pm.expect(jsonData.database).to.eql('connected');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Metrics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8083/metrics",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8083",
+              "path": ["metrics"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Contains payment metrics', function () {",
+                  "    var responseText = pm.response.text();",
+                  "    pm.expect(responseText).to.include('payment_service_payments_processed_total');",
+                  "    pm.expect(responseText).to.include('payment_service_kafka_messages_consumed_total');",
+                  "    pm.expect(responseText).to.include('payment_service_db_queries_total');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Internal Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8083/internal/stats",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8083",
+              "path": ["internal", "stats"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Contains payment stats', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('totalPayments');",
+                  "    pm.expect(jsonData).to.have.property('paymentsByStatus');",
+                  "    var statusCounts = jsonData.paymentsByStatus;",
+                  "    pm.expect(statusCounts).to.have.property('success');",
+                  "    pm.expect(statusCounts).to.have.property('failed');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Complete Flow Test",
+      "description": "Run entire event-driven flow in sequence",
+      "item": [
+        {
+          "name": "Full Flow: User → Order → Payment",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8081/health",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8081",
+              "path": ["health"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Complete event-driven flow test",
+                  "pm.test('Event-Driven Flow Complete', function () {",
+                  "    console.log('========================================');",
+                  "    console.log('EVENT-DRIVEN FLOW TEST SUMMARY');",
+                  "    console.log('========================================');",
+                  "    console.log('1. User created:', pm.collectionVariables.get('userId'));",
+                  "    console.log('2. Order created:', pm.collectionVariables.get('orderId'));",
+                  "    console.log('3. Payment created:', pm.collectionVariables.get('paymentId'));",
+                  "    console.log('');",
+                  "    console.log('Event Flow:');",
+                  "    console.log('  User Service → user.created → Order Service (cached)');",
+                  "    console.log('  Order Service → order.created → Payment Service');",
+                  "    console.log('  Payment Service → payment.completed → Kafka');",
+                  "    console.log('========================================');",
+                  "});",
+                  "",
+                  "// Verify all IDs were created",
+                  "pm.test('All entities created', function () {",
+                  "    pm.expect(pm.collectionVariables.get('userId')).to.not.be.undefined;",
+                  "    pm.expect(pm.collectionVariables.get('orderId')).to.not.be.undefined;",
+                  "    pm.expect(pm.collectionVariables.get('paymentId')).to.not.be.undefined;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "console.log('Starting E-Commerce Microservices API Test...');"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "console.log('Test completed!');"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "userId",
+      "value": ""
+    },
+    {
+      "key": "orderId",
+      "value": ""
+    },
+    {
+      "key": "paymentId",
+      "value": ""
+    }
+  ]
+}
