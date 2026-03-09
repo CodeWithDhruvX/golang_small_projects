@@ -70,13 +70,6 @@ func SetupRoutes(
 				chat.GET("/sessions/:id/messages", chatHandler.GetMessages)
 				chat.POST("/", chatHandler.Chat)
 				chat.POST("/stream", chatHandler.StreamChat)
-				// Handle CORS preflight explicitly for streaming endpoint
-				chat.OPTIONS("/stream", func(c *gin.Context) {
-					c.Header("Access-Control-Allow-Origin", "*")
-					c.Header("Access-Control-Allow-Headers", "Authorization, Content-Type, Cache-Control, Accept")
-					c.Header("Access-Control-Allow-Methods", "POST, OPTIONS")
-					c.Status(204)
-				})
 			}
 
 			// Document routes
