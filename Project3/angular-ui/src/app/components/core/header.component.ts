@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter } from '@angular/core';
+import { Component, Output, EventEmitter, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
@@ -13,10 +13,24 @@ import { AuthService } from '../../services/auth.service';
 export class HeaderComponent {
   @Output() menuToggle = new EventEmitter<void>();
   
+  isDropdownOpen = false;
+  
   constructor(
     private authService: AuthService,
     private router: Router
   ) {}
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest('#user-menu') && !target.closest('[role="menu"]')) {
+      this.isDropdownOpen = false;
+    }
+  }
+
+  toggleDropdown(): void {
+    this.isDropdownOpen = !this.isDropdownOpen;
+  }
 
   logout(): void {
     this.authService.logout().subscribe({

@@ -38,12 +38,12 @@ export class SidebarComponent {
       icon: '💬',
       current: false
     },
-    {
-      name: 'Search',
-      href: '/search',
-      icon: '🔍',
-      current: false
-    }
+    // {
+    //   name: 'Search',
+    //   href: '/search',
+    //   icon: '🔍',
+    //   current: false
+    // }
   ];
 
   constructor(private router: Router) {}

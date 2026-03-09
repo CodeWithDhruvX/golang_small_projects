@@ -1,5 +1,0 @@
-{
-  "model": "llama3.1:8b",
-  "prompt": "Explain machine learning in simple terms for a beginner.",
-  "stream": false
-}
