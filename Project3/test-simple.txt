@@ -1,0 +1,15 @@
+Supervised learning is a machine learning method where the model learns from labeled training data.
+
+Key features of supervised learning:
+- Uses labeled examples
+- Maps inputs to known outputs
+- Can be used for classification and regression
+- Requires training data with correct answers
+
+Common supervised learning algorithms include:
+- Linear regression
+- Decision trees
+- Neural networks
+- Support vector machines
+
+This content should be searchable by the RAG system.

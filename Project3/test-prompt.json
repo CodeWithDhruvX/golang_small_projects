@@ -1,0 +1,5 @@
+{
+  "model": "llama3.1:8b",
+  "prompt": "Hello, how are you? Please respond in a friendly and helpful manner.",
+  "stream": false
+}

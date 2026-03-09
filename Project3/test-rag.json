@@ -1,0 +1,5 @@
+{
+  "model": "llama3.1:8b",
+  "prompt": "Based on the document about machine learning fundamentals, what are the three main types of machine learning mentioned?",
+  "stream": false
+}

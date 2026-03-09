@@ -1,0 +1,338 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: knowledge-base
+  labels:
+    app: grafana
+data:
+  datasources.yaml: |
+    apiVersion: 1
+    datasources:
+    - name: Prometheus
+      type: prometheus
+      access: proxy
+      url: http://prometheus:9090
+      isDefault: true
+      editable: true
+      jsonData:
+        timeInterval: "15s"
+        queryTimeout: "60s"
+    - name: PostgreSQL
+      type: postgres
+      access: proxy
+      url: postgres:5432
+      database: knowledge_base
+      user: postgres
+      secureJsonData:
+        password: postgres
+      jsonData:
+        sslmode: "disable"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards
+  namespace: knowledge-base
+  labels:
+    app: grafana
+data:
+  dashboards.yaml: |
+    apiVersion: 1
+    providers:
+    - name: 'default'
+      orgId: 1
+      folder: ''
+      type: file
+      disableDeletion: false
+      updateIntervalSeconds: 10
+      allowUiUpdates: true
+      options:
+        path: /var/lib/grafana/dashboards
+
+  knowledge-base-overview.json: |
+    {
+      "dashboard": {
+        "id": null,
+        "title": "Knowledge Base Overview",
+        "tags": ["knowledge-base"],
+        "timezone": "browser",
+        "panels": [
+          {
+            "id": 1,
+            "title": "Application Health",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "up{job=\"backend\"}",
+                "legendFormat": "Backend"
+              },
+              {
+                "expr": "up{job=\"frontend\"}",
+                "legendFormat": "Frontend"
+              },
+              {
+                "expr": "up{job=\"postgres-exporter\"}",
+                "legendFormat": "PostgreSQL"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "mappings": [
+                  {"options": {"0": {"text": "DOWN", "color": "red"}}, "type": "value"},
+                  {"options": {"1": {"text": "UP", "color": "green"}}, "type": "value"}
+                ]
+              }
+            },
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+          },
+          {
+            "id": 2,
+            "title": "Request Rate",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(http_requests_total{job=\"backend\"}[5m])",
+                "legendFormat": "{{method}} {{endpoint}}"
+              }
+            ],
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+          },
+          {
+            "id": 3,
+            "title": "Response Time",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job=\"backend\"}[5m]))",
+                "legendFormat": "95th percentile"
+              },
+              {
+                "expr": "histogram_quantile(0.50, rate(http_request_duration_seconds_bucket{job=\"backend\"}[5m]))",
+                "legendFormat": "50th percentile"
+              }
+            ],
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+          },
+          {
+            "id": 4,
+            "title": "Error Rate",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(http_requests_total{job=\"backend\",status=~\"4..\"}[5m]) / rate(http_requests_total{job=\"backend\"}[5m])",
+                "legendFormat": "4xx errors"
+              },
+              {
+                "expr": "rate(http_requests_total{job=\"backend\",status=~\"5..\"}[5m]) / rate(http_requests_total{job=\"backend\"}[5m])",
+                "legendFormat": "5xx errors"
+              }
+            ],
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+          },
+          {
+            "id": 5,
+            "title": "Memory Usage",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "container_memory_usage_bytes{pod=~\"backend-.*\"} / 1024 / 1024",
+                "legendFormat": "{{pod}}"
+              },
+              {
+                "expr": "container_memory_usage_bytes{pod=~\"frontend-.*\"} / 1024 / 1024",
+                "legendFormat": "{{pod}}"
+              }
+            ],
+            "yAxes": [
+              {"unit": "MB"}
+            ],
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16}
+          },
+          {
+            "id": 6,
+            "title": "CPU Usage",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(container_cpu_usage_seconds_total{pod=~\"backend-.*\"}[5m]) * 100",
+                "legendFormat": "{{pod}}"
+              },
+              {
+                "expr": "rate(container_cpu_usage_seconds_total{pod=~\"frontend-.*\"}[5m]) * 100",
+                "legendFormat": "{{pod}}"
+              }
+            ],
+            "yAxes": [
+              {"unit": "percent"}
+            ],
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16}
+          },
+          {
+            "id": 7,
+            "title": "Database Connections",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "pg_stat_database_numbackends{datname=\"knowledge_base\"}",
+                "legendFormat": "Active Connections"
+              }
+            ],
+            "gridPos": {"h": 8, "w": 6, "x": 0, "y": 24}
+          },
+          {
+            "id": 8,
+            "title": "Database Size",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "pg_database_size_bytes{datname=\"knowledge_base\"} / 1024 / 1024",
+                "legendFormat": "Size (MB)"
+              }
+            ],
+            "gridPos": {"h": 8, "w": 6, "x": 6, "y": 24}
+          },
+          {
+            "id": 9,
+            "title": "Documents Processed",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "documents_processed_total",
+                "legendFormat": "Documents"
+              }
+            ],
+            "gridPos": {"h": 8, "w": 6, "x": 12, "y": 24}
+          },
+          {
+            "id": 10,
+            "title": "Chat Sessions",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "chat_sessions_total",
+                "legendFormat": "Sessions"
+              }
+            ],
+            "gridPos": {"h": 8, "w": 6, "x": 18, "y": 24}
+          }
+        ],
+        "time": {
+          "from": "now-1h",
+          "to": "now"
+        },
+        "refresh": "30s"
+      }
+    }
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: knowledge-base
+  labels:
+    app: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      securityContext:
+        fsGroup: 472
+        runAsUser: 472
+        runAsGroup: 472
+      containers:
+      - name: grafana
+        image: grafana/grafana:latest
+        env:
+        - name: GF_SECURITY_ADMIN_USER
+          value: admin
+        - name: GF_SECURITY_ADMIN_PASSWORD
+          value: admin123
+        - name: GF_USERS_ALLOW_SIGN_UP
+          value: "false"
+        - name: GF_INSTALL_PLUGINS
+          value: "grafana-clock-panel,grafana-simple-json-datasource"
+        ports:
+        - containerPort: 3000
+          name: web
+        volumeMounts:
+        - name: grafana-storage
+          mountPath: /var/lib/grafana
+        - name: grafana-datasources
+          mountPath: /etc/grafana/provisioning/datasources
+        - name: grafana-dashboards
+          mountPath: /etc/grafana/provisioning/dashboards
+        - name: grafana-dashboard-definitions
+          mountPath: /var/lib/grafana/dashboards
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "50m"
+          limits:
+            memory: "512Mi"
+            cpu: "200m"
+      volumes:
+      - name: grafana-storage
+        persistentVolumeClaim:
+          claimName: grafana-pvc
+      - name: grafana-datasources
+        configMap:
+          name: grafana-datasources
+      - name: grafana-dashboards
+        configMap:
+          name: grafana-dashboards
+      - name: grafana-dashboard-definitions
+        configMap:
+          name: grafana-dashboards
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-pvc
+  namespace: knowledge-base
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 5Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: knowledge-base
+  labels:
+    app: grafana
+spec:
+  selector:
+    app: grafana
+  ports:
+  - name: web
+    port: 3000
+    targetPort: 3000
+  type: ClusterIP

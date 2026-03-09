@@ -1,0 +1,23 @@
+<div class="min-h-screen bg-gray-50">
+  <!-- Login Page -->
+  <app-login *ngIf="isLoginRoute()"></app-login>
+
+  <!-- Main Application Layout -->
+  <div *ngIf="!isLoginRoute()" class="h-screen flex flex-col">
+    <!-- Header -->
+    <app-header (menuToggle)="toggleSidebar()"></app-header>
+
+    <div class="flex flex-1 overflow-hidden">
+      <!-- Sidebar -->
+      <app-sidebar
+        [isOpen]="isSidebarOpen"
+        (close)="closeSidebar()"
+      ></app-sidebar>
+
+      <!-- Main Content -->
+      <main class="flex-1 overflow-auto">
+        <router-outlet></router-outlet>
+      </main>
+    </div>
+  </div>
+</div>

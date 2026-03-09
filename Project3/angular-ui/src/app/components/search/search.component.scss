@@ -1,0 +1,8 @@
+// Additional component-specific styles if needed
+
+// Add styles for highlighted search terms
+:deep(mark) {
+  background-color: #fef3c7;
+  padding: 1px 2px;
+  border-radius: 2px;
+}

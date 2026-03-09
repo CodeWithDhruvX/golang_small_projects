@@ -1,0 +1,71 @@
+<!-- Mobile sidebar overlay -->
+<div
+  *ngIf="isOpen"
+  class="fixed inset-0 flex z-40 lg:hidden"
+  (click)="closeSidebar()"
+>
+  <div class="fixed inset-0 bg-gray-600 bg-opacity-75" aria-hidden="true"></div>
+</div>
+
+<!-- Sidebar -->
+<div
+  class="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0"
+  [class.translate-x-0]="isOpen"
+  [class.-translate-x-full]="!isOpen"
+>
+  <div class="flex items-center justify-between h-16 px-4 border-b border-gray-200 lg:hidden">
+    <div class="flex items-center">
+      <div class="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center">
+        <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+        </svg>
+      </div>
+      <div class="ml-3">
+        <h1 class="text-lg font-semibold text-gray-900">Knowledge Base</h1>
+      </div>
+    </div>
+    <button
+      (click)="closeSidebar()"
+      class="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+    >
+      <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+      </svg>
+    </button>
+  </div>
+
+  <div class="flex flex-col h-full">
+    <!-- Navigation -->
+    <nav class="flex-1 px-4 py-6 space-y-2">
+      <div
+        *ngFor="let item of navigationItems"
+        class="group"
+      >
+        <a
+          [routerLink]="item.href"
+          (click)="onItemClick(item)"
+          class="flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors"
+          [class.bg-blue-50.text-blue-700]="isCurrentRoute(item.href)"
+          [class.text-gray-600.hover:bg-gray-50.hover:text-gray-900]="!isCurrentRoute(item.href)"
+        >
+          <span class="mr-3 text-lg">{{ item.icon }}</span>
+          {{ item.name }}
+        </a>
+      </div>
+    </nav>
+
+    <!-- Footer -->
+    <div class="border-t border-gray-200 p-4">
+      <div class="text-xs text-gray-500">
+        <div class="mb-2">
+          <strong>Private Knowledge Base</strong>
+        </div>
+        <div class="space-y-1">
+          <div>• AI-Powered Search</div>
+          <div>• Document Processing</div>
+          <div>• Secure & Private</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

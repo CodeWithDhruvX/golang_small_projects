@@ -1,0 +1,5 @@
+{
+  "model": "llama3.1:8b",
+  "prompt": "What is 2+2?",
+  "stream": false
+}

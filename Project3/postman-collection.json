@@ -1,0 +1,1465 @@
+{
+	"info": {
+		"_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+		"name": "Private Knowledge Base API",
+		"description": "Comprehensive API collection for testing the Private Knowledge Base system including authentication, document management, chat functionality, and search capabilities.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "🔐 Authentication",
+			"item": [
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has token\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('token');",
+									"    pm.expect(jsonData).to.have.property('user_id');",
+									"    pm.expect(jsonData).to.have.property('username');",
+									"    pm.expect(jsonData).to.have.property('expires_in');",
+									"});",
+									"",
+									"pm.test(\"Token is not empty\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.token).to.be.a('string');",
+									"    pm.expect(jsonData.token.length).to.be.greaterThan(0);",
+									"});",
+									"",
+									"// Store token for subsequent requests",
+									"if (pm.response.code === 200) {",
+									"    const jsonData = pm.response.json();",
+									"    pm.collectionVariables.set('jwt_token', jsonData.token);",
+									"    pm.collectionVariables.set('user_id', jsonData.user_id);",
+									"    pm.collectionVariables.set('username', jsonData.username);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"testuser\",\n  \"password\": \"testpass\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"login"
+							]
+						},
+						"description": "Authenticate user and receive JWT token for subsequent requests"
+					},
+					"response": []
+				},
+				{
+					"name": "Refresh Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has new token\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('token');",
+									"    pm.expect(jsonData).to.have.property('expires_in');",
+									"});",
+									"",
+									"// Update stored token",
+									"if (pm.response.code === 200) {",
+									"    const jsonData = pm.response.json();",
+									"    pm.collectionVariables.set('jwt_token', jsonData.token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/refresh",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"refresh"
+							]
+						},
+						"description": "Refresh an existing JWT token"
+					},
+					"response": []
+				},
+				{
+					"name": "Logout",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Logout message\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('message');",
+									"    pm.expect(jsonData.message).to.eql('Logged out successfully');",
+									"});",
+									"",
+									"// Clear stored token",
+									"pm.collectionVariables.unset('jwt_token');",
+									"pm.collectionVariables.unset('user_id');",
+									"pm.collectionVariables.unset('username');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/logout",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"logout"
+							]
+						},
+						"description": "Invalidate user session and clear token"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "📄 Document Management",
+			"item": [
+				{
+					"name": "Upload Document",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has document info\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('document_id');",
+									"    pm.expect(jsonData).to.have.property('filename');",
+									"    pm.expect(jsonData).to.have.property('size');",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData.status).to.eql('uploaded');",
+									"});",
+									"",
+									"// Store document ID for subsequent tests",
+									"if (pm.response.code === 200) {",
+									"    const jsonData = pm.response.json();",
+									"    pm.collectionVariables.set('document_id', jsonData.document_id);",
+									"    pm.collectionVariables.set('uploaded_filename', jsonData.filename);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/path/to/test-document.pdf"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/documents/upload",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"documents",
+								"upload"
+							]
+						},
+						"description": "Upload a document for processing and indexing"
+					},
+					"response": []
+				},
+				{
+					"name": "List Documents",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has documents array\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('documents');",
+									"    pm.expect(jsonData.documents).to.be.an('array');",
+									"    pm.expect(jsonData).to.have.property('pagination');",
+									"});",
+									"",
+									"pm.test(\"Pagination structure\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.pagination).to.have.property('page');",
+									"    pm.expect(jsonData.pagination).to.have.property('limit');",
+									"    pm.expect(jsonData.pagination).to.have.property('total');",
+									"    pm.expect(jsonData.pagination).to.have.property('total_pages');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/documents?page=1&limit=20",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"documents"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "20"
+								}
+							]
+						},
+						"description": "Get paginated list of uploaded documents"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Document Details",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Document details structure\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('filename');",
+									"    pm.expect(jsonData).to.have.property('content_type');",
+									"    pm.expect(jsonData).to.have.property('file_size');",
+									"    pm.expect(jsonData).to.have.property('processed');",
+									"    pm.expect(jsonData).to.have.property('chunks');",
+									"});",
+									"",
+									"pm.test(\"Chunks array exists\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.chunks).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/documents/{{document_id}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"documents",
+								"{{document_id}}"
+							]
+						},
+						"description": "Get detailed information about a specific document"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Document Chunks",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Chunks response structure\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('chunks');",
+									"    pm.expect(jsonData).to.have.property('pagination');",
+									"    pm.expect(jsonData.chunks).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Chunk structure\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.chunks.length > 0) {",
+									"        const chunk = jsonData.chunks[0];",
+									"        pm.expect(chunk).to.have.property('id');",
+									"        pm.expect(chunk).to.have.property('chunk_index');",
+									"        pm.expect(chunk).to.have.property('content');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/documents/{{document_id}}/chunks?page=1&limit=50",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"documents",
+								"{{document_id}}",
+								"chunks"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "50"
+								}
+							]
+						},
+						"description": "Get all chunks for a specific document"
+					},
+					"response": []
+				},
+				{
+					"name": "Reindex Document",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Reindex response\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('message');",
+									"    pm.expect(jsonData).to.have.property('document_id');",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData.status).to.eql('processing');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/documents/{{document_id}}/reindex",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"documents",
+								"{{document_id}}",
+								"reindex"
+							]
+						},
+						"description": "Reprocess and re-index a document"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Document",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Delete confirmation\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('message');",
+									"    pm.expect(jsonData.message).to.eql('Document deleted successfully');",
+									"});",
+									"",
+									"// Clear document ID from collection",
+									"pm.collectionVariables.unset('document_id');",
+									"pm.collectionVariables.unset('uploaded_filename');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/documents/{{document_id}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"documents",
+								"{{document_id}}"
+							]
+						},
+						"description": "Delete a document and all associated chunks"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "💬 Chat & AI",
+			"item": [
+				{
+					"name": "Create Chat Session",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Session created successfully\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('session_id');",
+									"    pm.expect(jsonData).to.have.property('session_name');",
+									"    pm.expect(jsonData).to.have.property('model');",
+									"    pm.expect(jsonData).to.have.property('created_at');",
+									"});",
+									"",
+									"// Store session ID for subsequent tests",
+									"if (pm.response.code === 200) {",
+									"    const jsonData = pm.response.json();",
+									"    pm.collectionVariables.set('session_id', jsonData.session_id);",
+									"    pm.collectionVariables.set('chat_model', jsonData.model);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"session_name\": \"Test Session\",\n  \"model\": \"llama3.1:8b\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/chat/sessions",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"chat",
+								"sessions"
+							]
+						},
+						"description": "Create a new chat session"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Chat Sessions",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Sessions response structure\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('sessions');",
+									"    pm.expect(jsonData.sessions).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Session structure\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.sessions.length > 0) {",
+									"        const session = jsonData.sessions[0];",
+									"        pm.expect(session).to.have.property('session_id');",
+									"        pm.expect(session).to.have.property('session_name');",
+									"        pm.expect(session).to.have.property('model');",
+									"        pm.expect(session).to.have.property('message_count');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/chat/sessions",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"chat",
+								"sessions"
+							]
+						},
+						"description": "Get all chat sessions for the current user"
+					},
+					"response": []
+				},
+				{
+					"name": "Send Chat Message",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Chat response structure\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('session_id');",
+									"    pm.expect(jsonData).to.have.property('message_id');",
+									"    pm.expect(jsonData).to.have.property('content');",
+									"    pm.expect(jsonData).to.have.property('citations');",
+									"    pm.expect(jsonData).to.have.property('model_used');",
+									"    pm.expect(jsonData).to.have.property('tokens_used');",
+									"    pm.expect(jsonData).to.have.property('response_time_ms');",
+									"});",
+									"",
+									"pm.test(\"Content is not empty\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.content).to.be.a('string');",
+									"    pm.expect(jsonData.content.length).to.be.greaterThan(0);",
+									"});",
+									"",
+									"pm.test(\"Citations is array\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.citations).to.be.an('array');",
+									"});",
+									"",
+									"// Store message ID for history test",
+									"if (pm.response.code === 200) {",
+									"    const jsonData = pm.response.json();",
+									"    pm.collectionVariables.set('last_message_id', jsonData.message_id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"session_id\": \"{{session_id}}\",\n  \"message\": \"What are the main points in the uploaded document?\",\n  \"model\": \"{{chat_model}}\",\n  \"stream\": false\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/chat",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"chat"
+							]
+						},
+						"description": "Send a message and get AI response"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Chat History",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Chat history structure\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('messages');",
+									"    pm.expect(jsonData).to.have.property('pagination');",
+									"    pm.expect(jsonData.messages).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Message structure\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.messages.length > 0) {",
+									"        const message = jsonData.messages[0];",
+									"        pm.expect(message).to.have.property('id');",
+									"        pm.expect(message).to.have.property('session_id');",
+									"        pm.expect(message).to.have.property('message_type');",
+									"        pm.expect(message).to.have.property('content');",
+									"        pm.expect(message).to.have.property('created_at');",
+									"        pm.expect(['user', 'assistant']).to.include(message.message_type);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/chat/sessions/{{session_id}}/messages?page=1&limit=50",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"chat",
+								"sessions",
+								"{{session_id}}",
+								"messages"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "50"
+								}
+							]
+						},
+						"description": "Get message history for a specific session"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Chat Session",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Delete confirmation\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('message');",
+									"    pm.expect(jsonData.message).to.eql('Chat session deleted successfully');",
+									"});",
+									"",
+									"// Clear session variables",
+									"pm.collectionVariables.unset('session_id');",
+									"pm.collectionVariables.unset('chat_model');",
+									"pm.collectionVariables.unset('last_message_id');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/chat/sessions/{{session_id}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"chat",
+								"sessions",
+								"{{session_id}}"
+							]
+						},
+						"description": "Delete a chat session and all messages"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "🔍 Search",
+			"item": [
+				{
+					"name": "Semantic Search",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Search response structure\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('results');",
+									"    pm.expect(jsonData).to.have.property('total');",
+									"    pm.expect(jsonData).to.have.property('query');",
+									"    pm.expect(jsonData).to.have.property('processing_time_ms');",
+									"    pm.expect(jsonData.results).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Search result structure\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.results.length > 0) {",
+									"        const result = jsonData.results[0];",
+									"        pm.expect(result).to.have.property('chunk');",
+									"        pm.expect(result).to.have.property('similarity');",
+									"        pm.expect(result).to.have.property('document');",
+									"        pm.expect(result.similarity).to.be.a('number');",
+									"        pm.expect(result.similarity).to.be.at.least(0);",
+									"        pm.expect(result.similarity).to.be.at.most(1);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"query\": \"machine learning algorithms\",\n  \"limit\": 10,\n  \"threshold\": 0.7\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/search",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"search"
+							]
+						},
+						"description": "Perform semantic search across all documents"
+					},
+					"response": []
+				},
+				{
+					"name": "Hybrid Search",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Hybrid search response structure\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('results');",
+									"    pm.expect(jsonData).to.have.property('total');",
+									"    pm.expect(jsonData.results).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Hybrid result structure\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.results.length > 0) {",
+									"        const result = jsonData.results[0];",
+									"        pm.expect(result).to.have.property('similarity');",
+									"        pm.expect(result).to.have.property('keyword_score');",
+									"        pm.expect(result).to.have.property('combined_score');",
+									"        pm.expect(result.combined_score).to.be.a('number');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"query\": \"deep learning neural networks\",\n  \"semantic_weight\": 0.7,\n  \"keyword_weight\": 0.3,\n  \"limit\": 10\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/search/hybrid",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"search",
+								"hybrid"
+							]
+						},
+						"description": "Perform hybrid search combining semantic and keyword search"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "🤖 AI Models",
+			"item": [
+				{
+					"name": "List Available Models",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Models response structure\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('models');",
+									"    pm.expect(jsonData.models).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Model structure\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.models.length > 0) {",
+									"        const model = jsonData.models[0];",
+									"        pm.expect(model).to.have.property('name');",
+									"        pm.expect(model).to.have.property('display_name');",
+									"        pm.expect(model).to.have.property('type');",
+									"        pm.expect(model).to.have.property('size');",
+									"        pm.expect(model).to.have.property('status');",
+									"        pm.expect(['chat', 'embedding']).to.include(model.type);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/models",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"models"
+							]
+						},
+						"description": "Get list of available AI models"
+					},
+					"response": []
+				},
+				{
+					"name": "Generate Embeddings",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Embeddings response structure\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('model');",
+									"    pm.expect(jsonData).to.have.property('embeddings');",
+									"    pm.expect(jsonData).to.have.property('dimensions');",
+									"    pm.expect(jsonData).to.have.property('processing_time_ms');",
+									"    pm.expect(jsonData.embeddings).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Embeddings array length\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.embeddings.length).to.equal(jsonData.dimensions);",
+									"});",
+									"",
+									"pm.test(\"All embeddings are numbers\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    jsonData.embeddings.forEach(function(embedding) {",
+									"        pm.expect(embedding).to.be.a('number');",
+									"    });",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"model\": \"nomic-embed-text\",\n  \"text\": \"This is a sample text for embedding generation\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/models/embeddings",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"models",
+								"embeddings"
+							]
+						},
+						"description": "Generate embeddings for text"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "📊 User & Analytics",
+			"item": [
+				{
+					"name": "Get User Profile",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"User profile structure\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('user_id');",
+									"    pm.expect(jsonData).to.have.property('username');",
+									"    pm.expect(jsonData).to.have.property('created_at');",
+									"    pm.expect(jsonData).to.have.property('last_login');",
+									"    pm.expect(jsonData).to.have.property('statistics');",
+									"});",
+									"",
+									"pm.test(\"Statistics structure\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.statistics).to.have.property('documents_uploaded');",
+									"    pm.expect(jsonData.statistics).to.have.property('chat_sessions');",
+									"    pm.expect(jsonData.statistics).to.have.property('total_messages');",
+									"    pm.expect(jsonData.statistics).to.have.property('tokens_used');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/user/profile",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"user",
+								"profile"
+							]
+						},
+						"description": "Get current user profile"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Usage Statistics",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Usage statistics structure\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('period');",
+									"    pm.expect(jsonData).to.have.property('statistics');",
+									"    pm.expect(jsonData).to.have.property('daily_breakdown');",
+									"});",
+									"",
+									"pm.test(\"Statistics values\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.statistics.documents_uploaded).to.be.a('number');",
+									"    pm.expect(jsonData.statistics.chat_sessions).to.be.a('number');",
+									"    pm.expect(jsonData.statistics.total_messages).to.be.a('number');",
+									"    pm.expect(jsonData.statistics.tokens_used).to.be.a('number');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/user/statistics?period=month",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"user",
+								"statistics"
+							],
+							"query": [
+								{
+									"key": "period",
+									"value": "month"
+								}
+							]
+						},
+						"description": "Get usage statistics for the current user"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "🏥 System & Health",
+			"item": [
+				{
+					"name": "Health Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Health response structure\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData).to.have.property('timestamp');",
+									"    pm.expect(jsonData).to.have.property('version');",
+									"    pm.expect(jsonData).to.have.property('checks');",
+									"    pm.expect(['healthy', 'unhealthy']).to.include(jsonData.status);",
+									"});",
+									"",
+									"pm.test(\"System checks\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.checks).to.have.property('database');",
+									"    pm.expect(jsonData.checks).to.have.property('redis');",
+									"    pm.expect(jsonData.checks).to.have.property('ollama');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/health",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"health"
+							]
+						},
+						"description": "Check system health status"
+					},
+					"response": []
+				},
+				{
+					"name": "Readiness Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Readiness response structure\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData).to.have.property('checks');",
+									"    pm.expect(['ready', 'not_ready']).to.include(jsonData.status);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/ready",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"ready"
+							]
+						},
+						"description": "Check if system is ready to accept requests"
+					},
+					"response": []
+				},
+				{
+					"name": "Metrics",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Metrics format\", function () {",
+									"    const responseText = pm.response.text();",
+									"    pm.expect(responseText).to.include('# HELP');",
+									"    pm.expect(responseText).to.include('# TYPE');",
+									"});",
+									"",
+									"pm.test(\"Key metrics present\", function () {",
+									"    const responseText = pm.response.text();",
+									"    pm.expect(responseText).to.include('http_requests_total');",
+									"    pm.expect(responseText).to.include('http_request_duration_seconds');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/metrics",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"metrics"
+							]
+						},
+						"description": "Get Prometheus metrics"
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Set base URL from environment variable or default",
+					"if (!pm.collectionVariables.get('baseUrl')) {",
+					"    pm.collectionVariables.set('baseUrl', 'http://localhost:8080');",
+					"}",
+					"",
+					"// Auto-refresh token if it's about to expire",
+					"if (pm.collectionVariables.get('jwt_token') && pm.info.requestName !== 'Login' && pm.info.requestName !== 'Refresh Token') {",
+					"    // Check if token exists and we're not making an auth request",
+					"    const token = pm.collectionVariables.get('jwt_token');",
+					"    if (token) {",
+					"        // Simple token validation - you can add more sophisticated checks",
+					"        try {",
+					"            const payload = JSON.parse(atob(token.split('.')[1]));",
+					"            const currentTime = Math.floor(Date.now() / 1000);",
+					"            // Refresh token if it expires in the next 5 minutes",
+					"            if (payload.exp - currentTime < 300) {",
+					"                // Token expires soon, refresh it",
+					"                console.log('Token expires soon, refreshing...');",
+									"            }",
+					"        } catch (e) {",
+					"            console.log('Token validation failed, continuing...');",
+					"        }",
+					"    }",
+					"}"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "jwt_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "user_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "username",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "document_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "session_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "chat_model",
+			"value": "llama3.1:8b",
+			"type": "string"
+		}
+	]
+}

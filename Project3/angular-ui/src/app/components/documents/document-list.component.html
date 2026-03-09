@@ -1,0 +1,260 @@
+<div class="bg-white shadow rounded-lg">
+  <!-- Header -->
+  <div class="px-6 py-4 border-b border-gray-200">
+    <div class="flex items-center justify-between">
+      <div>
+        <h2 class="text-lg font-medium text-gray-900">Documents</h2>
+        <p class="mt-1 text-sm text-gray-500">
+          {{ totalDocuments }} document(s) found
+        </p>
+      </div>
+      <div class="flex items-center space-x-2">
+        <button
+          (click)="refresh()"
+          class="p-2 text-gray-400 hover:text-gray-600"
+          title="Refresh"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search and Filters -->
+  <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <!-- Search -->
+      <div class="md:col-span-2">
+        <div class="relative">
+          <input
+            type="text"
+            [(ngModel)]="searchQuery"
+            placeholder="Search documents..."
+            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            (keyup.enter)="onSearch()"
+          >
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
+            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter -->
+      <div>
+        <select
+          [(ngModel)]="filterProcessed"
+          (change)="onFilterChange()"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+        >
+          <option [ngValue]="null">All Documents</option>
+          <option [ngValue]="true">Processed Only</option>
+          <option [ngValue]="false">Unprocessed Only</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="mt-4 flex items-center justify-between">
+      <button
+        (click)="onSearch()"
+        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
+        Search
+      </button>
+
+      <!-- Bulk Actions -->
+      <div class="flex items-center space-x-2">
+        <button
+          *ngIf="selectedDocuments.size > 0"
+          (click)="bulkDelete()"
+          class="px-3 py-1 bg-red-600 text-white text-sm rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+        >
+          Delete Selected ({{ selectedDocuments.size }})
+        </button>
+        <button
+          *ngIf="selectedDocuments.size > 0"
+          (click)="clearSelection()"
+          class="px-3 py-1 bg-gray-600 text-white text-sm rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
+        >
+          Clear Selection
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="p-8 text-center">
+    <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+    </svg>
+    <p class="mt-2 text-gray-500">Loading documents...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="errorMessage" class="p-8 text-center">
+    <div class="rounded-md bg-red-50 p-4 border border-red-200">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+        <div class="ml-3">
+          <h3 class="text-sm font-medium text-red-800">
+            {{ errorMessage }}
+          </h3>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Documents Table -->
+  <div *ngIf="!isLoading && !errorMessage" class="overflow-hidden">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-6 py-3 text-left">
+            <input
+              type="checkbox"
+              [checked]="selectedDocuments.size === documents.length && documents.length > 0"
+              [indeterminate]="selectedDocuments.size > 0 && selectedDocuments.size < documents.length"
+              (change)="selectAllDocuments()"
+              class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            >
+          </th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" (click)="onSort('filename')">
+            Name {{ getSortIcon('filename') }}
+          </th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" (click)="onSort('file_size')">
+            Size {{ getSortIcon('file_size') }}
+          </th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" (click)="onSort('upload_time')">
+            Uploaded {{ getSortIcon('upload_time') }}
+          </th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Status
+          </th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Actions
+          </th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-200">
+        <tr *ngFor="let document of documents" class="hover:bg-gray-50">
+          <td class="px-6 py-4 whitespace-nowrap">
+            <input
+              type="checkbox"
+              [checked]="selectedDocuments.has(document.id)"
+              (change)="toggleDocumentSelection(document.id)"
+              class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            >
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="flex items-center">
+              <span class="text-xl mr-3">{{ getFileIcon(document.content_type) }}</span>
+              <div>
+                <div class="text-sm font-medium text-gray-900 cursor-pointer hover:text-blue-600" (click)="selectDocument(document)">
+                  {{ document.filename }}
+                </div>
+                <div class="text-xs text-gray-500">
+                  {{ document.content_type }}
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+            {{ formatFileSize(document.file_size) }}
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+            {{ formatDate(document.upload_time) }}
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" [class]="getProcessingStatusColor(document.processing_status)">
+              {{ getProcessingStatusIcon(document.processing_status) }} {{ document.processing_status }}
+            </span>
+            <div class="text-xs text-gray-500 mt-1" *ngIf="document.chunk_count > 0">
+              {{ document.chunk_count }} chunks
+            </div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+            <div class="flex items-center space-x-2">
+              <button
+                (click)="selectDocument(document)"
+                class="text-blue-600 hover:text-blue-900"
+                title="View Details"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                </svg>
+              </button>
+              <button
+                (click)="reindexDocument(document.id)"
+                class="text-green-600 hover:text-green-900"
+                title="Reindex"
+                *ngIf="document.processed"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+              </button>
+              <button
+                (click)="deleteDocument(document.id)"
+                class="text-red-600 hover:text-red-900"
+                title="Delete"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Empty State -->
+    <div *ngIf="documents.length === 0" class="p-8 text-center">
+      <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+      </svg>
+      <h3 class="mt-2 text-sm font-medium text-gray-900">No documents found</h3>
+      <p class="mt-1 text-sm text-gray-500">
+        Get started by uploading your first document.
+      </p>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div *ngIf="!isLoading && !errorMessage && totalPages > 1" class="px-6 py-4 border-t border-gray-200">
+    <div class="flex items-center justify-between">
+      <div class="text-sm text-gray-700">
+        Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ min(currentPage * pageSize, totalDocuments) }} of {{ totalDocuments }} results
+      </div>
+      <div class="flex items-center space-x-2">
+        <button
+          (click)="onPageChange(currentPage - 1)"
+          [disabled]="currentPage === 1"
+          class="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Previous
+        </button>
+        
+        <span class="px-3 py-1 text-sm">
+          Page {{ currentPage }} of {{ totalPages }}
+        </span>
+        
+        <button
+          (click)="onPageChange(currentPage + 1)"
+          [disabled]="currentPage === totalPages"
+          class="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

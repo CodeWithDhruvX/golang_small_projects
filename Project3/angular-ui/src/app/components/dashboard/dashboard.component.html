@@ -1,0 +1,235 @@
+<div class="p-6">
+  <!-- Page Header -->
+  <div class="mb-8">
+    <h1 class="text-2xl font-bold text-gray-900">Dashboard</h1>
+    <p class="mt-1 text-gray-600">Welcome to your Private Knowledge Base</p>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="text-center py-12">
+    <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+    </svg>
+    <p class="mt-2 text-gray-500">Loading dashboard...</p>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div *ngIf="!isLoading" class="space-y-6">
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <!-- Documents Card -->
+      <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center">
+          <div class="flex-shrink-0 bg-blue-100 rounded-lg p-3">
+            <span class="text-2xl">📄</span>
+          </div>
+          <div class="ml-5 w-0 flex-1">
+            <dl>
+              <dt class="text-sm font-medium text-gray-500 truncate">Documents</dt>
+              <dd class="text-lg font-medium text-gray-900">
+                {{ userProfile?.statistics?.documents_uploaded || 0 }}
+              </dd>
+            </dl>
+          </div>
+        </div>
+        <div class="mt-4">
+          <button
+            (click)="navigateToDocuments()"
+            class="text-sm text-blue-600 hover:text-blue-800 font-medium"
+          >
+            View all documents →
+          </button>
+        </div>
+      </div>
+
+      <!-- Chat Sessions Card -->
+      <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center">
+          <div class="flex-shrink-0 bg-green-100 rounded-lg p-3">
+            <span class="text-2xl">💬</span>
+          </div>
+          <div class="ml-5 w-0 flex-1">
+            <dl>
+              <dt class="text-sm font-medium text-gray-500 truncate">Chat Sessions</dt>
+              <dd class="text-lg font-medium text-gray-900">
+                {{ userProfile?.statistics?.chat_sessions || 0 }}
+              </dd>
+            </dl>
+          </div>
+        </div>
+        <div class="mt-4">
+          <button
+            (click)="navigateToChat()"
+            class="text-sm text-green-600 hover:text-green-800 font-medium"
+          >
+            Start chatting →
+          </button>
+        </div>
+      </div>
+
+      <!-- Messages Card -->
+      <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center">
+          <div class="flex-shrink-0 bg-purple-100 rounded-lg p-3">
+            <span class="text-2xl">💭</span>
+          </div>
+          <div class="ml-5 w-0 flex-1">
+            <dl>
+              <dt class="text-sm font-medium text-gray-500 truncate">Total Messages</dt>
+              <dd class="text-lg font-medium text-gray-900">
+                {{ userProfile?.statistics?.total_messages || 0 }}
+              </dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tokens Card -->
+      <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center">
+          <div class="flex-shrink-0 bg-yellow-100 rounded-lg p-3">
+            <span class="text-2xl">🪙</span>
+          </div>
+          <div class="ml-5 w-0 flex-1">
+            <dl>
+              <dt class="text-sm font-medium text-gray-500 truncate">Tokens Used</dt>
+              <dd class="text-lg font-medium text-gray-900">
+                {{ userProfile?.statistics?.tokens_used?.toLocaleString() || 0 }}
+              </dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="bg-white rounded-lg shadow">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-lg font-medium text-gray-900">Quick Actions</h2>
+      </div>
+      <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <button
+            (click)="navigateToUpload()"
+            class="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-colors"
+          >
+            <div class="text-center">
+              <span class="text-3xl">📤</span>
+              <p class="mt-2 text-sm font-medium text-gray-900">Upload Document</p>
+              <p class="text-xs text-gray-500">Add new documents to your knowledge base</p>
+            </div>
+          </button>
+
+          <button
+            (click)="navigateToChat()"
+            class="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-400 hover:bg-green-50 transition-colors"
+          >
+            <div class="text-center">
+              <span class="text-3xl">💬</span>
+              <p class="mt-2 text-sm font-medium text-gray-900">Start Chat</p>
+              <p class="text-xs text-gray-500">Ask questions about your documents</p>
+            </div>
+          </button>
+
+          <button
+            (click)="navigateToSearch()"
+            class="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-400 hover:bg-purple-50 transition-colors"
+          >
+            <div class="text-center">
+              <span class="text-3xl">🔍</span>
+              <p class="mt-2 text-sm font-medium text-gray-900">Search</p>
+              <p class="text-xs text-gray-500">Search across all your documents</p>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Recent Documents -->
+      <div class="bg-white rounded-lg shadow">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-medium text-gray-900">Recent Documents</h2>
+            <button
+              (click)="navigateToDocuments()"
+              class="text-sm text-blue-600 hover:text-blue-800"
+            >
+              View all
+            </button>
+          </div>
+        </div>
+        <div class="p-6">
+          <div *ngIf="recentDocuments.length === 0" class="text-center py-8">
+            <span class="text-4xl">📄</span>
+            <p class="mt-2 text-sm text-gray-500">No documents yet</p>
+            <button
+              (click)="navigateToUpload()"
+              class="mt-2 text-sm text-blue-600 hover:text-blue-800"
+            >
+              Upload your first document
+            </button>
+          </div>
+          
+          <div *ngIf="recentDocuments.length > 0" class="space-y-4">
+            <div *ngFor="let document of recentDocuments" class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg">
+              <span class="text-xl">{{ getFileIcon(document.content_type) }}</span>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-gray-900 truncate">{{ document.filename }}</p>
+                <p class="text-xs text-gray-500">{{ formatFileSize(document.file_size) }} • {{ formatDate(document.upload_time) }}</p>
+              </div>
+              <div class="flex items-center">
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium" [class]="getProcessingStatusColor(document.processing_status)">
+                  {{ getProcessingStatusIcon(document.processing_status) }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Chat Sessions -->
+      <div class="bg-white rounded-lg shadow">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-medium text-gray-900">Recent Chat Sessions</h2>
+            <button
+              (click)="navigateToChat()"
+              class="text-sm text-blue-600 hover:text-blue-800"
+            >
+              View all
+            </button>
+          </div>
+        </div>
+        <div class="p-6">
+          <div *ngIf="recentSessions.length === 0" class="text-center py-8">
+            <span class="text-4xl">💬</span>
+            <p class="mt-2 text-sm text-gray-500">No chat sessions yet</p>
+            <button
+              (click)="navigateToChat()"
+              class="mt-2 text-sm text-blue-600 hover:text-blue-800"
+            >
+              Start your first chat
+            </button>
+          </div>
+          
+          <div *ngIf="recentSessions.length > 0" class="space-y-4">
+            <div *ngFor="let session of recentSessions" class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg">
+              <span class="text-xl">💬</span>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-gray-900 truncate">{{ session.session_name }}</p>
+                <p class="text-xs text-gray-500">{{ getModelDisplayName(session.model) }} • {{ formatDate(session.last_activity) }}</p>
+              </div>
+              <div class="flex items-center">
+                <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                  Active
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
