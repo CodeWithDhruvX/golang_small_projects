@@ -1,6 +1,9 @@
 package storage
 
-import "ai-recruiter-assistant/internal/auth"
+import (
+	"ai-recruiter-assistant/internal/auth"
+	"time"
+)
 
 // StorageInterface defines all storage operations
 type StorageInterface interface {
@@ -14,6 +17,7 @@ type StorageInterface interface {
 	CreateEmail(email *Email) (*Email, error)
 	GetEmailByID(id, userID string) (*Email, error)
 	GetUserEmails(userID string, page, limit int) ([]Email, error)
+	GetUserEmailsByDateRange(userID string, page, limit int, startDate, endDate time.Time) ([]Email, error)
 	UpdateEmail(email *Email) error
 	DeleteEmail(id, userID string) error
 

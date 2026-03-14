@@ -167,24 +167,33 @@ func (gs *GmailService) GetGmailClient(ctx context.Context, userID string) (*gma
 
 // FetchEmails fetches emails from Gmail
 func (gs *GmailService) FetchEmails(ctx context.Context, userID string, maxResults int64) ([]*gmail.Message, error) {
+	return gs.FetchEmailsWithDateRange(ctx, userID, maxResults, time.Now().AddDate(0, 0, -7), time.Now())
+}
+
+// FetchEmailsWithDateRange fetches emails from Gmail within a specific date range
+func (gs *GmailService) FetchEmailsWithDateRange(ctx context.Context, userID string, maxResults int64, startDate, endDate time.Time) ([]*gmail.Message, error) {
 	srv, err := gs.GetGmailClient(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get gmail client: %w", err)
 	}
 
-	// Calculate date from one week ago
-	oneWeekAgo := time.Now().AddDate(0, 0, -7)
-	query := fmt.Sprintf("after:%s", oneWeekAgo.Format("2006/01/02"))
+	// Build Gmail search query with date range
+	query := fmt.Sprintf("after:%s before:%s", 
+		startDate.Format("2006/01/02"), 
+		endDate.Format("2006/01/02"))
 
-	logrus.Infof("Fetching emails from last week with query: %s", query)
+	logrus.Infof("Fetching emails from %s to %s with query: %s", 
+		startDate.Format("2006-01-02"), 
+		endDate.Format("2006-01-02"), 
+		query)
 
-	// Get messages from inbox from the last week
+	// Get messages from inbox within the date range
 	msgs, err := srv.Users.Messages.List("me").Q(query).MaxResults(maxResults).Do()
 	if err != nil {
 		return nil, fmt.Errorf("failed to list messages: %w", err)
 	}
 
-	logrus.Infof("Found %d messages from last week", len(msgs.Messages))
+	logrus.Infof("Found %d messages in the specified date range", len(msgs.Messages))
 
 	var messages []*gmail.Message
 	for _, msg := range msgs.Messages {

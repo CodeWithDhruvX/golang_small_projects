@@ -172,6 +172,8 @@ func (h *GmailHandler) AuthCallback(c *gin.Context) {
 // @Produce json
 // @Security BearerAuth
 // @Param max_results query int false "Maximum number of emails to fetch" default(50)
+// @Param start_date query string false "Start date (YYYY-MM-DD format)"
+// @Param end_date query string false "End date (YYYY-MM-DD format)"
 // @Success 200 {object} map[string]interface{}
 // @Failure 401 {object} map[string]interface{}
 // @Failure 500 {object} map[string]interface{}
@@ -184,15 +186,60 @@ func (h *GmailHandler) SyncEmails(c *gin.Context) {
 	}
 
 	// Parse max_results parameter
-	maxResults := int64(100) // Increased from 50 to get more emails from last week
+	maxResults := int64(100) // Increased from 50 to get more emails
 	if maxResultsStr := c.Query("max_results"); maxResultsStr != "" {
 		if parsed, err := strconv.Atoi(maxResultsStr); err == nil && parsed > 0 {
 			maxResults = int64(parsed)
 		}
 	}
 
-	// Fetch emails from Gmail
-	messages, err := h.gmailService.FetchEmails(c.Request.Context(), userID, maxResults)
+	// Parse date range parameters with default to one week
+	startDateStr := c.Query("start_date")
+	endDateStr := c.Query("end_date")
+	
+	var startDate, endDate time.Time
+	var err error
+	
+	// Default to one week ago if no start date provided
+	if startDateStr == "" {
+		startDate = time.Now().AddDate(0, 0, -7)
+	} else {
+		startDate, err = time.Parse("2006-01-02", startDateStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid start_date format. Use YYYY-MM-DD"})
+			return
+		}
+	}
+	
+	// Default to today if no end date provided
+	if endDateStr == "" {
+		endDate = time.Now()
+	} else {
+		endDate, err = time.Parse("2006-01-02", endDateStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid end_date format. Use YYYY-MM-DD"})
+			return
+		}
+	}
+
+	// Validate date range
+	if startDate.After(endDate) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Start date cannot be after end date"})
+		return
+	}
+
+	logrus.Infof("Syncing emails for user %s from %s to %s", userID, startDate.Format("2006-01-02"), endDate.Format("2006-01-02"))
+
+	// Fetch emails from Gmail with date range
+	var messages []*gmailv1.Message
+	if startDateStr == "" && endDateStr == "" {
+		// Use default method if no dates provided
+		messages, err = h.gmailService.FetchEmails(c.Request.Context(), userID, maxResults)
+	} else {
+		// Use date range method
+		messages, err = h.gmailService.FetchEmailsWithDateRange(c.Request.Context(), userID, maxResults, startDate, endDate)
+	}
+	
 	if err != nil {
 		logrus.Errorf("Failed to fetch emails: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch emails from Gmail"})
@@ -248,6 +295,8 @@ func (h *GmailHandler) SyncEmails(c *gin.Context) {
 		"message":         "Email sync completed",
 		"processed_count": processedCount,
 		"total_fetched":   len(messages),
+		"start_date":      startDate.Format("2006-01-02"),
+		"end_date":        endDate.Format("2006-01-02"),
 	})
 }
 

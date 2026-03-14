@@ -241,6 +241,41 @@ func (s *Storage) GetUserEmails(userID string, page, limit int) ([]Email, error)
 	return emails, nil
 }
 
+// GetUserEmailsByDateRange retrieves emails for a user with date range filtering and pagination
+func (s *Storage) GetUserEmailsByDateRange(userID string, page, limit int, startDate, endDate time.Time) ([]Email, error) {
+	offset := (page - 1) * limit
+	
+	query := `
+		SELECT id, user_id, subject, body, sender_email, sender_name, 
+			is_recruiter, processed, COALESCE(gmail_id, '') as gmail_id, created_at, updated_at
+		FROM emails 
+		WHERE user_id = $1 AND created_at >= $2 AND created_at <= $3
+		ORDER BY created_at DESC
+		LIMIT $4 OFFSET $5
+	`
+	
+	rows, err := s.db.Query(context.Background(), query, userID, startDate, endDate, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	
+	var emails []Email
+	for rows.Next() {
+		var email Email
+		err := rows.Scan(
+			&email.ID, &email.UserID, &email.Subject, &email.Body,
+			&email.SenderEmail, &email.SenderName, &email.IsRecruiter,
+			&email.Processed, &email.GmailID, &email.CreatedAt, &email.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+		emails = append(emails, email)
+	}
+	
+	return emails, nil
+}
+
 // UpdateEmail updates an existing email
 func (s *Storage) UpdateEmail(email *Email) error {
 	query := `

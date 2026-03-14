@@ -32,6 +32,7 @@ import { FormsModule } from '@angular/forms';
             </div>
             <div class="flex items-center space-x-4">
               <button class="btn btn-primary" (click)="importEmails()">Import Emails</button>
+              <button class="btn btn-info" (click)="syncEmails()">Sync Emails</button>
               <button class="btn btn-secondary" (click)="goToDashboard()">Dashboard</button>
             </div>
           </div>
@@ -40,25 +41,63 @@ import { FormsModule } from '@angular/forms';
 
       <!-- Main content -->
       <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <!-- Filters (Mocked for now) -->
+        <!-- Filters and Date Range -->
         <div class="bg-white rounded-lg shadow p-4 mb-6">
-          <div class="flex flex-wrap gap-4 items-center">
-            <div class="flex-1">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+            <!-- Search -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
               <input type="text" placeholder="Search emails..." class="form-input" (input)="onSearch($event)">
             </div>
-            <div class="flex items-center space-x-2">
-              <label class="text-sm font-medium text-gray-700">AI Model:</label>
-              <select [(ngModel)]="selectedModel" class="form-input py-1 text-sm bg-white border-gray-300 rounded-md focus:ring-purple-500 focus:border-purple-500">
+            
+            <!-- Date Range -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+              <input type="date" [(ngModel)]="startDate" class="form-input" (change)="onDateRangeChange()">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+              <input type="date" [(ngModel)]="endDate" class="form-input" (change)="onDateRangeChange()">
+            </div>
+            
+            <!-- AI Model -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">AI Model</label>
+              <select [(ngModel)]="selectedModel" class="form-input">
                 <option *ngFor="let model of availableModels" [value]="model.id">
                   {{ model.name }}
                 </option>
               </select>
             </div>
           </div>
+          
+          <!-- Quick Date Range Buttons -->
+          <div class="flex flex-wrap gap-2 mt-4">
+            <button class="btn btn-sm btn-secondary" (click)="setQuickDateRange(7)">Last 7 Days</button>
+            <button class="btn btn-sm btn-secondary" (click)="setQuickDateRange(30)">Last 30 Days</button>
+            <button class="btn btn-sm btn-secondary" (click)="setQuickDateRange(90)">Last 90 Days</button>
+            <button class="btn btn-sm btn-secondary" (click)="clearDateRange()">All Time</button>
+          </div>
         </div>
 
-        <!-- Email List -->
+        <!-- Email List Header with Controls -->
         <div class="bg-white rounded-lg shadow overflow-hidden">
+          <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-gray-900">Emails</h2>
+            <div class="flex items-center space-x-4">
+              <!-- Page Size Selector -->
+              <div class="flex items-center space-x-2">
+                <label class="text-sm text-gray-600">Show:</label>
+                <select [(ngModel)]="pageSize" (change)="onPageSizeChange()" class="form-input text-sm py-1">
+                  <option [value]="10">10</option>
+                  <option [value]="25">25</option>
+                  <option [value]="50">50</option>
+                  <option [value]="100">100</option>
+                </select>
+                <span class="text-sm text-gray-600">per page</span>
+              </div>
+            </div>
+          </div>
           <div class="divide-y divide-gray-200" *ngIf="emails.length > 0; else noEmails">
             <!-- Email Item -->
             <div *ngFor="let email of emails" class="p-6 hover:bg-gray-50">
@@ -99,6 +138,11 @@ import { FormsModule } from '@angular/forms';
                   </button>
                   <button *ngIf="!email.is_recruiter && email.status === 'pending'" 
                           class="btn btn-secondary btn-sm" 
+                          (click)="recallEmail(email)">
+                    Recall
+                  </button>
+                  <button *ngIf="!email.is_recruiter && email.status === 'pending'" 
+                          class="btn btn-secondary btn-sm" 
                           (click)="classifyEmail(email)">
                     Classify AI
                   </button>
@@ -124,9 +168,33 @@ import { FormsModule } from '@angular/forms';
           </div>
           <ng-template #noEmails>
             <div class="p-10 text-center text-gray-500">
-              No emails found. Try importing some.
+              No emails found for the selected date range. Try importing some or adjusting the date range.
             </div>
           </ng-template>
+        </div>
+
+        <!-- Pagination -->
+        <div class="bg-white rounded-lg shadow p-4 mt-6" *ngIf="totalPages > 1">
+          <div class="flex items-center justify-between">
+            <div class="text-sm text-gray-700">
+              Showing page {{ currentPage }} of {{ totalPages }} ({{ totalCount }} emails)
+            </div>
+            <div class="flex space-x-2">
+              <button class="btn btn-secondary btn-sm" 
+                      (click)="previousPage()" 
+                      [disabled]="currentPage <= 1">
+                Previous
+              </button>
+              <span class="px-3 py-1 text-sm bg-gray-100 rounded-md">
+                {{ currentPage }}
+              </span>
+              <button class="btn btn-secondary btn-sm" 
+                      (click)="nextPage()" 
+                      [disabled]="currentPage >= totalPages">
+                Next
+              </button>
+            </div>
+          </div>
         </div>
       </main>
     </div>
@@ -171,6 +239,87 @@ import { FormsModule } from '@angular/forms';
     .me-1 {
       margin-right: 0.25rem;
     }
+    
+    .form-input {
+      display: block;
+      width: 100%;
+      padding: 0.375rem 0.75rem;
+      font-size: 0.875rem;
+      line-height: 1.5;
+      color: #495057;
+      background-color: #fff;
+      background-clip: padding-box;
+      border: 1px solid #ced4da;
+      border-radius: 0.375rem;
+      transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    }
+    
+    .form-input:focus {
+      color: #495057;
+      background-color: #fff;
+      border-color: #80bdff;
+      outline: 0;
+      box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+    
+    .btn {
+      display: inline-block;
+      font-weight: 400;
+      text-align: center;
+      white-space: nowrap;
+      vertical-align: middle;
+      user-select: none;
+      border: 1px solid transparent;
+      padding: 0.375rem 0.75rem;
+      font-size: 0.875rem;
+      line-height: 1.5;
+      border-radius: 0.375rem;
+      transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+      cursor: pointer;
+    }
+    
+    .btn-primary {
+      color: #fff;
+      background-color: #007bff;
+      border-color: #007bff;
+    }
+    
+    .btn-primary:hover {
+      color: #fff;
+      background-color: #0069d9;
+      border-color: #0062cc;
+    }
+    
+    .btn-secondary {
+      color: #fff;
+      background-color: #6c757d;
+      border-color: #6c757d;
+    }
+    
+    .btn-secondary:hover {
+      color: #fff;
+      background-color: #5a6268;
+      border-color: #545b62;
+    }
+    
+    .btn-info {
+      color: #fff;
+      background-color: #17a2b8;
+      border-color: #17a2b8;
+    }
+    
+    .btn-info:hover {
+      color: #fff;
+      background-color: #138496;
+      border-color: #117a8b;
+    }
+    
+    .btn-sm {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.875rem;
+      line-height: 1.5;
+      border-radius: 0.2rem;
+    }
   `]
 })
 export class EmailsComponent implements OnInit {
@@ -178,12 +327,22 @@ export class EmailsComponent implements OnInit {
   isGenerating = false;
   gpuStatus: any = null;
   
-  selectedModel = 'llama3.1:8b';
+  selectedModel = 'phi3:latest';
   availableModels = [
     { id: 'llama3.1:8b', name: 'Llama 3.1 8B' },
     { id: 'phi3:latest', name: 'Phi-3' },
     { id: 'qwen2.5-coder:3b', name: 'Qwen 2.5 Coder 3B' }
   ];
+
+  // Pagination
+  currentPage = 1;
+  pageSize = 25; // Increased from 10 to show more emails
+  totalCount = 0;
+  totalPages = 0;
+
+  // Date range
+  startDate: string = '';
+  endDate: string = '';
 
   constructor(
     private router: Router,
@@ -191,15 +350,39 @@ export class EmailsComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.setDefaultDateRange();
     this.loadEmails();
     this.loadGPUStatus();
   }
 
+  setDefaultDateRange(): void {
+    const today = new Date();
+    const oneWeekAgo = new Date(today);
+    oneWeekAgo.setDate(today.getDate() - 7);
+    
+    this.endDate = today.toISOString().split('T')[0];
+    this.startDate = oneWeekAgo.toISOString().split('T')[0];
+  }
+
   loadEmails(): void {
-    this.emailService.getEmails().subscribe({
+    this.emailService.getEmails(this.currentPage, this.pageSize, this.startDate, this.endDate).subscribe({
       next: (res: any) => {
         console.log('Loaded emails:', res.emails);
         this.emails = res.emails || [];
+        
+        // Update pagination info
+        this.currentPage = res.page || 1;
+        this.pageSize = res.limit || 10;
+        
+        // Calculate total count and pages (this would ideally come from the API)
+        // For now, we'll estimate based on current page data
+        if (this.emails.length < this.pageSize) {
+          this.totalCount = (this.currentPage - 1) * this.pageSize + this.emails.length;
+        } else {
+          this.totalCount = this.currentPage * this.pageSize; // Estimate
+        }
+        this.totalPages = Math.ceil(this.totalCount / this.pageSize);
+        
         // Log each email's body content
         this.emails.forEach((email, index) => {
           console.log(`Email ${index + 1}:`, {
@@ -225,10 +408,234 @@ export class EmailsComponent implements OnInit {
     });
   }
 
+  onDateRangeChange(): void {
+    this.currentPage = 1; // Reset to first page when date range changes
+    this.loadEmails();
+  }
+
+  onPageSizeChange(): void {
+    this.currentPage = 1; // Reset to first page when page size changes
+    this.loadEmails();
+  }
+
+  setQuickDateRange(days: number): void {
+    const today = new Date();
+    const pastDate = new Date(today);
+    pastDate.setDate(today.getDate() - days);
+    
+    this.endDate = today.toISOString().split('T')[0];
+    this.startDate = pastDate.toISOString().split('T')[0];
+    
+    this.onDateRangeChange();
+  }
+
+  clearDateRange(): void {
+    this.startDate = '';
+    this.endDate = '';
+    this.onDateRangeChange();
+  }
+
+  previousPage(): void {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.loadEmails();
+    }
+  }
+
+  nextPage(): void {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.loadEmails();
+    }
+  }
+
   importEmails(): void {
     this.emailService.importEmails().subscribe({
       next: () => this.loadEmails(),
       error: (err) => alert('Import failed: ' + (err.error?.error || 'Unknown error'))
+    });
+  }
+
+  syncEmails(): void {
+    console.log('Syncing emails...');
+    
+    // Check if user is authenticated
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.error('No authentication token found');
+      
+      // For testing purposes, create a test user and login
+      if (confirm('No authentication found. Would you like to create a test user and login for testing?')) {
+        this.createTestUserAndLogin();
+        return;
+      }
+      
+      alert('Please login first to sync emails');
+      return;
+    }
+    
+    console.log('Authentication token found:', token.substring(0, 20) + '...');
+    
+    // First check Gmail connection status
+    console.log('Checking Gmail connection status...');
+    this.emailService.getGmailStatus().subscribe({
+      next: (status) => {
+        console.log('Gmail status:', status);
+        
+        if (!status.connected) {
+          // Gmail not connected, guide user through OAuth2 setup
+          if (confirm('Gmail account not connected. Would you like to connect your Gmail account to sync emails?')) {
+            this.connectGmailAccount();
+            return;
+          } else {
+            alert('Gmail sync requires account connection. You can connect your Gmail account to enable email syncing.');
+            return;
+          }
+        }
+        
+        // Gmail is connected, proceed with sync
+        console.log('Gmail connected, proceeding with sync...');
+        this.performGmailSync();
+      },
+      error: (err) => {
+        console.error('Failed to check Gmail status:', err);
+        // If status check fails, try sync anyway (might be a different error)
+        this.performGmailSync();
+      }
+    });
+  }
+
+  connectGmailAccount(): void {
+    console.log('Initiating Gmail OAuth2 connection...');
+    
+    this.emailService.connectGmail().subscribe({
+      next: (response) => {
+        console.log('Gmail OAuth URL received:', response);
+        
+        if (response.auth_url) {
+          // Open OAuth URL in new window
+          const popup = window.open(response.auth_url, 'gmail_oauth', 'width=500,height=600,scrollbars=yes,resizable=yes');
+          
+          // Poll for popup closure (simplified approach)
+          const checkClosed = setInterval(() => {
+            if (popup?.closed) {
+              clearInterval(checkClosed);
+              console.log('OAuth popup closed, checking connection status...');
+              
+              // Check if connection was successful
+              setTimeout(() => {
+                this.emailService.getGmailStatus().subscribe({
+                  next: (status) => {
+                    if (status.connected) {
+                      alert('Gmail account connected successfully! You can now sync emails.');
+                      this.loadEmails(); // Refresh to show updated status
+                    } else {
+                      alert('Gmail connection was not completed. Please try again.');
+                    }
+                  },
+                  error: (err) => {
+                    console.error('Error checking connection status:', err);
+                    alert('There was an issue connecting your Gmail account. Please try again.');
+                  }
+                });
+              }, 1000);
+            }
+          }, 1000);
+        } else {
+          alert('Failed to get Gmail authorization URL. Please check your Gmail OAuth2 configuration.');
+        }
+      },
+      error: (err) => {
+        console.error('Failed to initiate Gmail connection:', err);
+        alert('Failed to connect to Gmail. Please check your Gmail OAuth2 setup in the backend configuration.');
+      }
+    });
+  }
+
+  performGmailSync(): void {
+    console.log('Calling Gmail sync API with date range:', this.startDate, 'to', this.endDate);
+    
+    // Use Gmail sync with date range
+    this.emailService.syncEmails(this.startDate, this.endDate).subscribe({
+      next: (response) => {
+        console.log('Gmail sync response:', response);
+        console.log(`Synced ${response.processed_count} emails from ${response.total_fetched} fetched`);
+        console.log(`Date range: ${response.start_date} to ${response.end_date}`);
+        
+        // Refresh the email list
+        this.loadEmails();
+        
+        // Show success message
+        alert(`Successfully synced ${response.processed_count} emails from Gmail!\nDate range: ${response.start_date} to ${response.end_date}`);
+      },
+      error: (err) => {
+        console.error('Gmail sync failed:', err);
+        console.error('Error details:', err.status, err.statusText, err.error);
+        
+        if (err.status === 401) {
+          alert('Authentication required. Please login again.');
+          // Optionally redirect to login page
+          // this.router.navigate(['/login']);
+        } else if (err.status === 400) {
+          alert('Invalid request: ' + (err.error?.error || 'Check your date range format'));
+        } else if (err.status === 0) {
+          alert('Cannot connect to server. Please check if the backend is running on localhost:8080');
+        } else {
+          alert('Gmail sync failed: ' + (err.error?.error || err.message || 'Unknown error'));
+        }
+      }
+    });
+  }
+
+  createTestUserAndLogin(): void {
+    console.log('Creating test user and logging in...');
+    
+    // Create test user
+    const testUser = {
+      email: 'test@example.com',
+      password: 'test123456',
+      name: 'Test User'
+    };
+    
+    // First try to register
+    fetch('http://localhost:8080/api/v1/auth/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(testUser)
+    }).then(response => response.json())
+    .then(data => {
+      console.log('Registration response:', data);
+      
+      // Now login
+      return fetch('http://localhost:8080/api/v1/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: testUser.email,
+          password: testUser.password
+        })
+      });
+    })
+    .then(response => response.json())
+    .then(data => {
+      console.log('Login response:', data);
+      
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        console.log('Test user logged in successfully');
+        alert('Test user created and logged in! Now you can sync emails.');
+        this.loadEmails(); // Refresh emails
+      } else {
+        alert('Login failed: ' + (data.error || 'Unknown error'));
+      }
+    })
+    .catch(err => {
+      console.error('Test user creation/login failed:', err);
+      alert('Test user creation failed: ' + err.message);
     });
   }
 
@@ -237,6 +644,26 @@ export class EmailsComponent implements OnInit {
       next: () => this.loadEmails(),
       error: (err) => alert('Classification failed')
     });
+  }
+
+  recallEmail(email: any): void {
+    if (confirm(`Are you sure you want to recall this email from "${email.sender_email}"? This will mark the email as recalled and remove it from your inbox.`)) {
+      // For now, we'll implement a basic recall functionality
+      // In a real implementation, this would call an API endpoint to handle the recall
+      console.log('Recalling email:', email.id);
+      
+      // You could implement an API call here
+      // this.emailService.recallEmail(email.id).subscribe({
+      //   next: () => this.loadEmails(),
+      //   error: (err) => alert('Recall failed')
+      // });
+      
+      // For demonstration, we'll just show an alert
+      alert(`Email "${email.subject}" has been marked for recall. In a production environment, this would trigger a recall process.`);
+      
+      // Optionally, you could remove the email from the list immediately
+      // this.emails = this.emails.filter(e => e.id !== email.id);
+    }
   }
 
   generateReply(email: any): void {
@@ -309,7 +736,7 @@ export class EmailsComponent implements OnInit {
     }
     this.emails = this.emails.filter(e => 
       (e.subject && e.subject.toLowerCase().includes(term)) || 
-      (e.from && e.from.toLowerCase().includes(term))
+      (e.sender_email && e.sender_email.toLowerCase().includes(term))
     );
   }
 

@@ -44,12 +44,14 @@ type Email struct {
 
 // GetEmails retrieves all emails for the authenticated user
 // @Summary Get user emails
-// @Description Retrieve all emails for the authenticated user
+// @Description Retrieve all emails for the authenticated user with optional date range filtering
 // @Tags emails
 // @Produce json
 // @Security BearerAuth
 // @Param page query int false "Page number" default(1)
 // @Param limit query int false "Number of items per page" default(10)
+// @Param start_date query string false "Start date (YYYY-MM-DD format)"
+// @Param end_date query string false "End date (YYYY-MM-DD format)"
 // @Success 200 {array} Email
 // @Failure 401 {object} map[string]interface{}
 // @Failure 500 {object} map[string]interface{}
@@ -63,16 +65,51 @@ func (h *EmailHandler) GetEmails(c *gin.Context) {
 
 	// Parse pagination parameters
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "25")) // Increased from 10 to 25
 	if page < 1 {
 		page = 1
 	}
 	if limit < 1 || limit > 100 {
-		limit = 10
+		limit = 25 // Increased from 10 to 25
 	}
 
-	// Get emails from storage
-	storageEmails, err := h.storage.GetUserEmails(userID, page, limit)
+	// Parse date range parameters with default to one week
+	startDateStr := c.Query("start_date")
+	endDateStr := c.Query("end_date")
+	
+	var startDate, endDate time.Time
+	var err error
+	
+	// Default to one week ago if no start date provided
+	if startDateStr == "" {
+		startDate = time.Now().AddDate(0, 0, -7)
+	} else {
+		startDate, err = time.Parse("2006-01-02", startDateStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid start_date format. Use YYYY-MM-DD"})
+			return
+		}
+	}
+	
+	// Default to today if no end date provided
+	if endDateStr == "" {
+		endDate = time.Now()
+	} else {
+		endDate, err = time.Parse("2006-01-02", endDateStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid end_date format. Use YYYY-MM-DD"})
+			return
+		}
+	}
+
+	// Validate date range
+	if startDate.After(endDate) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Start date cannot be after end date"})
+		return
+	}
+
+	// Get emails from storage with date range filtering
+	storageEmails, err := h.storage.GetUserEmailsByDateRange(userID, page, limit, startDate, endDate)
 	if err != nil {
 		logrus.Errorf("Failed to get emails: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve emails"})
@@ -98,9 +135,11 @@ func (h *EmailHandler) GetEmails(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"emails": emails,
-		"page":   page,
-		"limit":  limit,
+		"emails":     emails,
+		"page":       page,
+		"limit":      limit,
+		"start_date": startDate.Format("2006-01-02"),
+		"end_date":   endDate.Format("2006-01-02"),
 	})
 }
 
