@@ -1,0 +1,139 @@
+<div class="gmail-container max-w-4xl mx-auto p-6">
+  <div class="bg-white rounded-lg shadow-lg">
+    <!-- Header -->
+    <div class="border-b border-gray-200 px-6 py-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center">
+            <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-2xl font-bold text-gray-900">Gmail Integration</h1>
+            <p class="text-sm text-gray-600">Connect your Gmail account to automatically process recruiter emails</p>
+          </div>
+        </div>
+        <button 
+          (click)="refreshStatus()" 
+          class="p-2 text-gray-500 hover:text-gray-700 transition-colors"
+          title="Refresh Status"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Status Card -->
+    <div class="p-6">
+      <div class="bg-gray-50 rounded-lg p-6 mb-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-gray-900">Connection Status</h2>
+          <span 
+            class="px-3 py-1 rounded-full text-sm font-medium"
+            [class]="gmailStatus.connected ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
+          >
+            {{ gmailStatus.connected ? 'Connected' : 'Disconnected' }}
+          </span>
+        </div>
+
+        <div class="space-y-2 text-sm">
+          <div class="flex justify-between">
+            <span class="text-gray-600">Email:</span>
+            <span class="font-medium">{{ gmailStatus.email || 'Not connected' }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">Last Sync:</span>
+            <span class="font-medium">{{ formatDate(gmailStatus.last_sync_at || '') }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">Connected Since:</span>
+            <span class="font-medium">{{ formatDate(gmailStatus.created_at || '') }}</span>
+          </div>
+        </div>
+
+        <div *ngIf="gmailStatus.message" class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+          <p class="text-sm text-blue-800">{{ gmailStatus.message }}</p>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap gap-3 mb-6">
+        <button
+          *ngIf="!gmailStatus.connected"
+          (click)="connectGmail()"
+          [disabled]="isLoading"
+          class="flex items-center px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+          </svg>
+          {{ isLoading ? 'Connecting...' : 'Connect Gmail' }}
+        </button>
+
+        <button
+          *ngIf="gmailStatus.connected"
+          (click)="syncEmails()"
+          [disabled]="isLoading"
+          class="flex items-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          {{ isLoading ? 'Syncing...' : 'Sync Emails' }}
+        </button>
+
+        <button
+          *ngIf="gmailStatus.connected"
+          (click)="disconnectGmail()"
+          [disabled]="isLoading"
+          class="flex items-center px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+          </svg>
+          {{ isLoading ? 'Disconnecting...' : 'Disconnect' }}
+        </button>
+      </div>
+
+      <!-- Sync Result -->
+      <div *ngIf="showSyncResult && syncResult" class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+        <h3 class="text-green-800 font-semibold mb-2">Sync Completed</h3>
+        <div class="text-sm text-green-700 space-y-1">
+          <p>{{ syncResult.message }}</p>
+          <p>Processed: {{ syncResult.processed_count }} emails</p>
+          <p>Total fetched: {{ syncResult.total_fetched }} emails</p>
+        </div>
+        <button 
+          (click)="showSyncResult = false"
+          class="mt-3 text-sm text-green-600 hover:text-green-800"
+        >
+          Dismiss
+        </button>
+      </div>
+
+      <!-- Instructions -->
+      <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <h3 class="text-blue-800 font-semibold mb-2">
+          <svg class="w-5 h-5 inline mr-2" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+          </svg>
+          How it works
+        </h3>
+        <ol class="text-sm text-blue-700 space-y-2 list-decimal list-inside">
+          <li>Click "Connect Gmail" to start the OAuth2 authentication process</li>
+          <li>Sign in with your Google account and grant the necessary permissions</li>
+          <li>Once connected, click "Sync Emails" to fetch recent recruiter emails</li>
+          <li>The system will automatically classify emails and generate AI responses</li>
+          <li>You can send replies directly through your Gmail account</li>
+        </ol>
+        <div class="mt-3 text-xs text-blue-600">
+          <strong>Security Note:</strong> We use OAuth2 authentication and never store your Gmail password. 
+          All communication is encrypted and follows Google's security best practices.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
