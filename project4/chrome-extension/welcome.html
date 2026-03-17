@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Email Response Generator - Welcome</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Google Sans', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+        }
+
+        .welcome-container {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 600px;
+            width: 90%;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #202124;
+            margin-bottom: 16px;
+            font-size: 28px;
+            font-weight: 500;
+        }
+
+        .subtitle {
+            color: #5f6368;
+            margin-bottom: 32px;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .features {
+            text-align: left;
+            margin: 32px 0;
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .features h3 {
+            color: #202124;
+            margin-bottom: 16px;
+            font-size: 18px;
+        }
+
+        .feature-list {
+            list-style: none;
+        }
+
+        .feature-list li {
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+            color: #5f6368;
+        }
+
+        .feature-list li::before {
+            content: '✓';
+            color: #4CAF50;
+            font-weight: bold;
+            margin-right: 12px;
+            font-size: 18px;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin-top: 32px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: #1a73e8;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1557b0;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #1a73e8;
+            border: 2px solid #1a73e8;
+        }
+
+        .btn-secondary:hover {
+            background: #1a73e8;
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .steps {
+            margin: 32px 0;
+            text-align: left;
+        }
+
+        .step {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .step-number {
+            background: #1a73e8;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 16px;
+            flex-shrink: 0;
+        }
+
+        .step-content h4 {
+            color: #202124;
+            margin-bottom: 4px;
+            font-size: 16px;
+        }
+
+        .step-content p {
+            color: #5f6368;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .footer {
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid #e0e0e0;
+            color: #5f6368;
+            font-size: 14px;
+        }
+
+        .footer a {
+            color: #1a73e8;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="welcome-container">
+        <div class="logo">🤖</div>
+        <h1>Welcome to AI Email Response Generator</h1>
+        <p class="subtitle">
+            Transform your Gmail experience with AI-powered email responses. 
+            Save time and communicate more effectively with intelligent, context-aware replies.
+        </p>
+
+        <div class="features">
+            <h3>✨ Key Features</h3>
+            <ul class="feature-list">
+                <li>AI-powered email response generation</li>
+                <li>Multiple tone options (Professional, Casual, Friendly, Formal)</li>
+                <li>Adjustable response length (Short, Medium, Detailed)</li>
+                <li>Seamless Gmail integration</li>
+                <li>Real-time response generation</li>
+                <li>Secure OAuth2 authentication</li>
+            </ul>
+        </div>
+
+        <div class="steps">
+            <h3 style="text-align: center; margin-bottom: 20px;">🚀 Getting Started</h3>
+            
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h4>Connect Your Gmail Account</h4>
+                    <p>Click the extension icon and select "Connect Gmail" to authorize access to your Gmail account.</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h4>Configure Your Preferences</h4>
+                    <p>Set your preferred response tone and length in the extension settings.</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h4>Start Generating Responses</h4>
+                    <p>Open any email in Gmail and click "Generate AI Response" to create a personalized reply.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="cta-buttons">
+            <a href="https://mail.google.com" target="_blank" class="btn btn-primary">
+                Open Gmail
+            </a>
+            <button class="btn btn-secondary" onclick="window.close()">
+                Close
+            </button>
+        </div>
+
+        <div class="footer">
+            <p>
+                Need help? Visit our <a href="#">documentation</a> or 
+                <a href="#">report an issue</a> on GitHub.
+            </p>
+            <p style="margin-top: 8px; font-size: 12px;">
+                Version 1.0.0 | Built with ❤️ for productivity
+            </p>
+        </div>
+    </div>
+</body>
+</html>

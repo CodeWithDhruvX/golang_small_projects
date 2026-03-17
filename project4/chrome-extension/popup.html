@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Email Response Generator</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="popup-container">
+        <!-- Header -->
+        <header class="popup-header">
+            <div class="logo">
+                <span class="logo-icon">🤖</span>
+                <h1>AI Email Assistant</h1>
+            </div>
+            <div class="status-indicator" id="status-indicator">
+                <span class="status-dot"></span>
+                <span class="status-text">Checking...</span>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="popup-content">
+            <!-- Connection Status -->
+            <section class="connection-status" id="connection-status">
+                <div class="status-card">
+                    <h3>Connection Status</h3>
+                    <div class="status-info">
+                        <div class="status-item">
+                            <span class="label">Gmail:</span>
+                            <span class="value" id="gmail-status">Not connected</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="label">Backend:</span>
+                            <span class="value" id="backend-status">Checking...</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" id="connect-btn">Connect Gmail</button>
+                </div>
+            </section>
+
+            <!-- Settings -->
+            <section class="settings-section" id="settings-section" style="display: none;">
+                <div class="settings-card">
+                    <h3>Response Settings</h3>
+                    
+                    <div class="form-group">
+                        <label for="tone-select">Response Tone</label>
+                        <select id="tone-select" class="form-control">
+                            <option value="professional">Professional</option>
+                            <option value="casual">Casual</option>
+                            <option value="friendly">Friendly</option>
+                            <option value="formal">Formal</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="length-select">Response Length</label>
+                        <select id="length-select" class="form-control">
+                            <option value="short">Short</option>
+                            <option value="medium">Medium</option>
+                            <option value="detailed">Detailed</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="auto-generate">
+                            <span class="checkmark"></span>
+                            Auto-generate on email open
+                        </label>
+                    </div>
+
+                    <button class="btn btn-secondary" id="save-settings-btn">Save Settings</button>
+                </div>
+            </section>
+
+            <!-- Quick Actions -->
+            <section class="quick-actions" id="quick-actions" style="display: none;">
+                <div class="actions-card">
+                    <h3>Quick Actions</h3>
+                    
+                    <button class="btn btn-outline" id="sync-emails-btn">
+                        <span class="btn-icon">🔄</span>
+                        Sync Emails
+                    </button>
+                    
+                    <button class="btn btn-outline" id="open-gmail-btn">
+                        <span class="btn-icon">📧</span>
+                        Open Gmail
+                    </button>
+                    
+                    <button class="btn btn-outline" id="view-stats-btn">
+                        <span class="btn-icon">📊</span>
+                        View Stats
+                    </button>
+                </div>
+            </section>
+
+            <!-- User Info -->
+            <section class="user-info" id="user-info" style="display: none;">
+                <div class="user-card">
+                    <div class="user-avatar">
+                        <span id="user-initial">U</span>
+                    </div>
+                    <div class="user-details">
+                        <div class="user-email" id="user-email">user@example.com</div>
+                        <div class="last-sync">Last sync: <span id="last-sync-time">Never</span></div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="popup-footer">
+            <div class="footer-links">
+                <a href="#" id="help-link">Help</a>
+                <a href="#" id="settings-link">Settings</a>
+                <a href="#" id="disconnect-link" style="display: none;">Disconnect</a>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="spinner"></div>
+        <div class="loading-text">Loading...</div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div class="toast" id="toast">
+        <div class="toast-content">
+            <span class="toast-icon" id="toast-icon"></span>
+            <span class="toast-message" id="toast-message"></span>
+        </div>
+        <button class="toast-close" id="toast-close">×</button>
+    </div>
+
+    <script src="popup-simple.js"></script>
+</body>
+</html>

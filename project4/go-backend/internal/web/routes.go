@@ -14,6 +14,7 @@ import (
 	"ai-recruiter-assistant/internal/storage"
 	"ai-recruiter-assistant/internal/web/handlers"
 	"ai-recruiter-assistant/internal/web/middleware"
+	"ai-recruiter-assistant/internal/ai"
 )
 
 // SetupRoutes configures all API routes
@@ -33,6 +34,11 @@ func SetupRoutes(router *gin.RouterGroup, db *pgxpool.Pool, redisClient *redis.C
 		logrus.Info("Gmail service initialized successfully")
 	}
 
+	// Initialize AI service
+	ollamaService := ai.NewOllamaService(cfg.OllamaURL)
+	aiService := ai.NewAIService(ollamaService)
+	logrus.Info("AI service initialized successfully")
+
 	// Initialize handlers
 	authHandler := auth.NewAuthHandler(authService, storageInstance)
 	emailHandler := handlers.NewEmailHandler(storageInstance, authService)
@@ -42,7 +48,7 @@ func SetupRoutes(router *gin.RouterGroup, db *pgxpool.Pool, redisClient *redis.C
 	
 	var gmailHandler *handlers.GmailHandler
 	if gmailService != nil {
-		gmailHandler = handlers.NewGmailHandler(storageInstance, gmailService, authService)
+		gmailHandler = handlers.NewGmailHandler(storageInstance, gmailService, authService, aiService)
 	}
 
 	// Public routes (no authentication required)
@@ -78,6 +84,7 @@ func SetupRoutes(router *gin.RouterGroup, db *pgxpool.Pool, redisClient *redis.C
 				gmail.GET("/status", gmailHandler.GetStatus)
 				gmail.POST("/sync", gmailHandler.SyncEmails)
 				gmail.POST("/send", gmailHandler.SendEmail)
+				gmail.POST("/generate-response", gmailHandler.GenerateResponse)
 				gmail.DELETE("/disconnect", gmailHandler.Disconnect)
 			}
 		}

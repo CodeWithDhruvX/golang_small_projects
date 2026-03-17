@@ -16,6 +16,7 @@ import (
 	"ai-recruiter-assistant/internal/auth"
 	gmailsvc "ai-recruiter-assistant/internal/gmail"
 	"ai-recruiter-assistant/internal/storage"
+	"ai-recruiter-assistant/internal/ai"
 )
 
 // GmailHandler handles Gmail OAuth2 operations
@@ -23,14 +24,16 @@ type GmailHandler struct {
 	storage      storage.StorageInterface
 	gmailService *gmailsvc.GmailService
 	authService  *auth.AuthService
+	aiService    ai.AIService
 }
 
 // NewGmailHandler creates a new Gmail handler
-func NewGmailHandler(storage storage.StorageInterface, gmailService *gmailsvc.GmailService, authService *auth.AuthService) *GmailHandler {
+func NewGmailHandler(storage storage.StorageInterface, gmailService *gmailsvc.GmailService, authService *auth.AuthService, aiService ai.AIService) *GmailHandler {
 	return &GmailHandler{
 		storage:      storage,
 		gmailService: gmailService,
 		authService:  authService,
+		aiService:    aiService,
 	}
 }
 
@@ -429,4 +432,82 @@ func extractNameFromEmail(emailStr string) string {
 	}
 	
 	return ""
+}
+
+// GenerateResponse generates an AI response for an email
+// @Summary Generate AI response for email
+// @Description Generates an AI-powered response based on email content
+// @Tags gmail
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body object{email_body=string,subject=string,sender=string,tone=string,length=string} true "Email data for response generation"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 500 {object} map[string]interface{}
+// @Router /gmail/generate-response [post]
+func (h *GmailHandler) GenerateResponse(c *gin.Context) {
+	userID, exists := auth.GetUserID(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	var request struct {
+		EmailBody string `json:"email_body" binding:"required"`
+		Subject   string `json:"subject"`
+		Sender    string `json:"sender"`
+		Tone      string `json:"tone"`
+		Length    string `json:"length"`
+	}
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Set default values
+	if request.Tone == "" {
+		request.Tone = "professional"
+	}
+	if request.Length == "" {
+		request.Length = "medium"
+	}
+
+	logrus.Infof("Generating AI response for user %s, tone: %s, length: %s", userID, request.Tone, request.Length)
+
+	// Validate AI service is available
+	if h.aiService == nil {
+		logrus.Error("AI service not available")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "AI service not available"})
+		return
+	}
+
+	// Generate response using AI service
+	response, err := h.aiService.GenerateEmailResponse(c.Request.Context(), ai.EmailRequest{
+		EmailBody: request.EmailBody,
+		Subject:   request.Subject,
+		Sender:    request.Sender,
+		Tone:      request.Tone,
+		Length:    request.Length,
+		UserID:    userID,
+	})
+
+	if err != nil {
+		logrus.Errorf("Failed to generate AI response: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate response"})
+		return
+	}
+
+	// Log the generation for analytics
+	logrus.Infof("AI response generated successfully for user %s", userID)
+
+	c.JSON(http.StatusOK, gin.H{
+		"success":  true,
+		"response": response.Response,
+		"tone":     response.Tone,
+		"length":   response.Length,
+		"tokens_used": response.TokensUsed,
+	})
 }

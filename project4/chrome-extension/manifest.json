@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+  "name": "AI Email Response Generator",
+  "version": "1.0.0",
+  "description": "Generate AI-powered responses for Gmail emails using your existing backend",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://mail.google.com/*",
+    "http://localhost:8080/*",
+    "https://yourdomain.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://mail.google.com/*"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup-test.html",
+    "default_title": "AI Email Response Generator"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["content.css"],
+      "matches": ["https://mail.google.com/*"]
+    }
+  ]
+}
